@@ -22,3 +22,18 @@ gr-ham
 
 Author: Clayton Smith
 Email: <argilo@gmail.com>
+
+This is a collection of GNU Radio blocks for useful amateur radio.
+
+Build instructions:
+
+    mkdir build
+    cd build
+    cmake ../
+    make
+    sudo make install
+
+If your GNU Radio is installed in /usr (rather than /usr/local), then
+replace the third line above with:
+
+    cmake -DCMAKE_INSTALL_PREFIX=/usr ../
