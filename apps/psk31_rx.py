@@ -2,7 +2,7 @@
 ##################################################
 # Gnuradio Python Flow Graph
 # Title: Psk31 Rx
-# Generated: Fri Jan  3 22:50:49 2014
+# Generated: Sat Jan  4 23:39:48 2014
 ##################################################
 
 from gnuradio import analog
@@ -40,9 +40,9 @@ class psk31_rx(grc_wxgui.top_block_gui):
         self.center_freq = center_freq = 441000000
         self.variable_text_box_0 = variable_text_box_0 = psk_offset
         self.samp_rate = samp_rate = 960000
-        self.psk_center = psk_center = center_freq + 125000
+        self.psk_center = psk_center = center_freq + 141000
         self.int_rate = int_rate = 48000
-        self.gain = gain = 40
+        self.gain = gain = 30
         self.corr = corr = 0
         self.audio_rate = audio_rate = 8000
 
@@ -92,9 +92,9 @@ class psk31_rx(grc_wxgui.top_block_gui):
         	sizer=_psk_center_sizer,
         	value=self.psk_center,
         	callback=self.set_psk_center,
-        	minimum=center_freq - (samp_rate / 2),
-        	maximum=center_freq + (samp_rate / 2),
-        	num_steps=192,
+        	minimum=center_freq + 110000,
+        	maximum=center_freq + 150000,
+        	num_steps=40,
         	style=wx.SL_HORIZONTAL,
         	cast=float,
         	proportion=1,
@@ -232,9 +232,9 @@ class psk31_rx(grc_wxgui.top_block_gui):
         self.osmosdr_source_0.set_bandwidth(0, 0)
           
         self.ham_varicode_rx_0 = ham.varicode_rx()
-        self.freq_xlating_fir_filter_xxx_1 = filter.freq_xlating_fir_filter_ccc(16, (firdes.low_pass(1, audio_rate, 31.25, 10, firdes.WIN_HAMMING, 6.76)), psk_offset, audio_rate)
+        self.freq_xlating_fir_filter_xxx_1 = filter.freq_xlating_fir_filter_ccc(16, (firdes.low_pass(1, audio_rate, 120, 40, firdes.WIN_HAMMING, 6.76)), psk_offset, audio_rate)
         self.freq_xlating_fir_filter_xxx_0 = filter.freq_xlating_fir_filter_ccc(samp_rate / int_rate, (firdes.low_pass(1, samp_rate, 12000, 12000, firdes.WIN_HAMMING, 6.76)), round(psk_center - center_freq,-3), samp_rate)
-        self.digital_mpsk_receiver_cc_0 = digital.mpsk_receiver_cc(2, 0, cmath.pi/100.0, -0.1, 0.1, 0.25, 0.01, 16, 0.001, 0.001)
+        self.digital_mpsk_receiver_cc_0 = digital.mpsk_receiver_cc(2, 0, cmath.pi/100.0, -100 * 6.28 / 500, 100 * 6.28 / 500, 0.25, 0.01, 16, 0.001, 0.001)
         self.digital_diff_phasor_cc_0 = digital.diff_phasor_cc()
         self.digital_binary_slicer_fb_0 = digital.binary_slicer_fb()
         self.blocks_message_sink_0 = blocks.message_sink(gr.sizeof_char*1, blocks_message_sink_0_msgq_out, True)
@@ -275,18 +275,18 @@ class psk31_rx(grc_wxgui.top_block_gui):
         self.psk_offset = psk_offset
         self._psk_offset_slider.set_value(self.psk_offset)
         self._psk_offset_text_box.set_value(self.psk_offset)
-        self.freq_xlating_fir_filter_xxx_1.set_center_freq(self.psk_offset)
         self.set_variable_text_box_0(self.psk_offset)
+        self.freq_xlating_fir_filter_xxx_1.set_center_freq(self.psk_offset)
 
     def get_center_freq(self):
         return self.center_freq
 
     def set_center_freq(self, center_freq):
         self.center_freq = center_freq
-        self.set_psk_center(self.center_freq + 125000)
         self.osmosdr_source_0.set_center_freq(self.center_freq, 0)
         self.wxgui_waterfallsink2_0.set_baseband_freq(self.center_freq)
         self.freq_xlating_fir_filter_xxx_0.set_center_freq(round(self.psk_center - self.center_freq,-3))
+        self.set_psk_center(self.center_freq + 141000)
 
     def get_variable_text_box_0(self):
         return self.variable_text_box_0
@@ -309,10 +309,10 @@ class psk31_rx(grc_wxgui.top_block_gui):
 
     def set_psk_center(self, psk_center):
         self.psk_center = psk_center
-        self._psk_center_slider.set_value(self.psk_center)
-        self._psk_center_text_box.set_value(self.psk_center)
         self.freq_xlating_fir_filter_xxx_0.set_center_freq(round(self.psk_center - self.center_freq,-3))
         self.wxgui_waterfallsink2_1.set_baseband_freq(self.psk_center)
+        self._psk_center_slider.set_value(self.psk_center)
+        self._psk_center_text_box.set_value(self.psk_center)
 
     def get_int_rate(self):
         return self.int_rate
@@ -327,9 +327,9 @@ class psk31_rx(grc_wxgui.top_block_gui):
 
     def set_gain(self, gain):
         self.gain = gain
+        self.osmosdr_source_0.set_gain(self.gain, 0)
         self._gain_slider.set_value(self.gain)
         self._gain_text_box.set_value(self.gain)
-        self.osmosdr_source_0.set_gain(self.gain, 0)
 
     def get_corr(self):
         return self.corr
@@ -345,8 +345,8 @@ class psk31_rx(grc_wxgui.top_block_gui):
 
     def set_audio_rate(self, audio_rate):
         self.audio_rate = audio_rate
-        self.freq_xlating_fir_filter_xxx_1.set_taps((firdes.low_pass(1, self.audio_rate, 31.25, 10, firdes.WIN_HAMMING, 6.76)))
         self.wxgui_waterfallsink2_2.set_sample_rate(self.audio_rate)
+        self.freq_xlating_fir_filter_xxx_1.set_taps((firdes.low_pass(1, self.audio_rate, 120, 40, firdes.WIN_HAMMING, 6.76)))
 
 if __name__ == '__main__':
     import ctypes
