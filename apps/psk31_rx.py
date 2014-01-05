@@ -2,14 +2,13 @@
 ##################################################
 # Gnuradio Python Flow Graph
 # Title: Psk31 Rx
-# Generated: Sat Jan  4 23:39:48 2014
+# Generated: Sun Jan  5 13:36:51 2014
 ##################################################
 
 from gnuradio import analog
 from gnuradio import audio
 from gnuradio import blocks
 from gnuradio import digital
-from gnuradio import digital;import cmath
 from gnuradio import eng_notation
 from gnuradio import filter
 from gnuradio import gr
@@ -18,11 +17,14 @@ from gnuradio.eng_option import eng_option
 from gnuradio.fft import window
 from gnuradio.filter import firdes
 from gnuradio.wxgui import forms
+from gnuradio.wxgui import numbersink2
+from gnuradio.wxgui import scopesink2
 from gnuradio.wxgui import termsink
 from gnuradio.wxgui import waterfallsink2
 from grc_gnuradio import wxgui as grc_wxgui
 from optparse import OptionParser
 import ham
+import math
 import osmosdr
 import wx
 
@@ -36,10 +38,9 @@ class psk31_rx(grc_wxgui.top_block_gui):
         ##################################################
         # Variables
         ##################################################
-        self.psk_offset = psk_offset = 843
         self.center_freq = center_freq = 441000000
-        self.variable_text_box_0 = variable_text_box_0 = psk_offset
         self.samp_rate = samp_rate = 960000
+        self.psk_offset = psk_offset = 1000
         self.psk_center = psk_center = center_freq + 141000
         self.int_rate = int_rate = 48000
         self.gain = gain = 30
@@ -104,6 +105,8 @@ class psk31_rx(grc_wxgui.top_block_gui):
         self.nb.AddPage(grc_wxgui.Panel(self.nb), "960 kHz")
         self.nb.AddPage(grc_wxgui.Panel(self.nb), "48 kHz")
         self.nb.AddPage(grc_wxgui.Panel(self.nb), "4 kHz")
+        self.nb.AddPage(grc_wxgui.Panel(self.nb), "I/Q scope")
+        self.nb.AddPage(grc_wxgui.Panel(self.nb), "Constellation")
         self.GridAdd(self.nb, 3, 0, 1, 2)
         _gain_sizer = wx.BoxSizer(wx.VERTICAL)
         self._gain_text_box = forms.text_box(
@@ -207,17 +210,55 @@ class psk31_rx(grc_wxgui.top_block_gui):
         self.wxgui_waterfallsink2_0.set_callback(wxgui_waterfallsink2_0_callback)
         self.wxgui_termsink_0 = termsink.termsink(
         	parent=self.GetWin(),
+        	size=(500,100),
         	msgq=wxgui_termsink_0_msgq_in,
         )
         self.Add(self.wxgui_termsink_0)
-        self._variable_text_box_0_text_box = forms.text_box(
-        	parent=self.GetWin(),
-        	value=self.variable_text_box_0,
-        	callback=self.set_variable_text_box_0,
-        	label="Frequency",
-        	converter=forms.float_converter(),
+        self.wxgui_scopesink2_1 = scopesink2.scope_sink_c(
+        	self.nb.GetPage(4).GetWin(),
+        	title="Scope Plot",
+        	sample_rate=31.25,
+        	v_scale=0.4,
+        	v_offset=0,
+        	t_scale=0,
+        	ac_couple=False,
+        	xy_mode=True,
+        	num_inputs=1,
+        	trig_mode=wxgui.TRIG_MODE_AUTO,
+        	y_axis_label="Counts",
         )
-        self.Add(self._variable_text_box_0_text_box)
+        self.nb.GetPage(4).Add(self.wxgui_scopesink2_1.win)
+        self.wxgui_scopesink2_0 = scopesink2.scope_sink_c(
+        	self.nb.GetPage(3).GetWin(),
+        	title="Scope Plot",
+        	sample_rate=500,
+        	v_scale=0.4,
+        	v_offset=0,
+        	t_scale=0,
+        	ac_couple=False,
+        	xy_mode=True,
+        	num_inputs=1,
+        	trig_mode=wxgui.TRIG_MODE_AUTO,
+        	y_axis_label="Counts",
+        )
+        self.nb.GetPage(3).Add(self.wxgui_scopesink2_0.win)
+        self.wxgui_numbersink2_0 = numbersink2.number_sink_f(
+        	self.GetWin(),
+        	unit="Hz",
+        	minval=-500 / math.pi,
+        	maxval=500 / math.pi,
+        	factor=500 / math.pi,
+        	decimal_places=1,
+        	ref_level=0,
+        	sample_rate=500,
+        	number_rate=15,
+        	average=False,
+        	avg_alpha=None,
+        	label="Carrier tracking offset",
+        	peak_hold=False,
+        	show_gauge=True,
+        )
+        self.Add(self.wxgui_numbersink2_0.win)
         self.osmosdr_source_0 = osmosdr.source( args="numchan=" + str(1) + " " + "" )
         self.osmosdr_source_0.set_sample_rate(samp_rate)
         self.osmosdr_source_0.set_center_freq(center_freq, 0)
@@ -232,10 +273,11 @@ class psk31_rx(grc_wxgui.top_block_gui):
         self.osmosdr_source_0.set_bandwidth(0, 0)
           
         self.ham_varicode_rx_0 = ham.varicode_rx()
-        self.freq_xlating_fir_filter_xxx_1 = filter.freq_xlating_fir_filter_ccc(16, (firdes.low_pass(1, audio_rate, 120, 40, firdes.WIN_HAMMING, 6.76)), psk_offset, audio_rate)
+        self.freq_xlating_fir_filter_xxx_1 = filter.freq_xlating_fir_filter_ccc(16, (firdes.low_pass(10, audio_rate, 120, 40, firdes.WIN_HAMMING, 6.76)), psk_offset, audio_rate)
         self.freq_xlating_fir_filter_xxx_0 = filter.freq_xlating_fir_filter_ccc(samp_rate / int_rate, (firdes.low_pass(1, samp_rate, 12000, 12000, firdes.WIN_HAMMING, 6.76)), round(psk_center - center_freq,-3), samp_rate)
-        self.digital_mpsk_receiver_cc_0 = digital.mpsk_receiver_cc(2, 0, cmath.pi/100.0, -100 * 6.28 / 500, 100 * 6.28 / 500, 0.25, 0.01, 16, 0.001, 0.001)
         self.digital_diff_phasor_cc_0 = digital.diff_phasor_cc()
+        self.digital_costas_loop_cc_0 = digital.costas_loop_cc(5 * math.pi /100.0, 2)
+        self.digital_clock_recovery_mm_xx_0 = digital.clock_recovery_mm_cc(16, 0.25*0.175*0.175, 0.5, 0.175, 0.005)
         self.digital_binary_slicer_fb_0 = digital.binary_slicer_fb()
         self.blocks_message_sink_0 = blocks.message_sink(gr.sizeof_char*1, blocks_message_sink_0_msgq_out, True)
         self.blocks_complex_to_real_1 = blocks.complex_to_real(1)
@@ -243,40 +285,34 @@ class psk31_rx(grc_wxgui.top_block_gui):
         self.band_pass_filter_0 = filter.fir_filter_ccc(int_rate / audio_rate, firdes.complex_band_pass(
         	1, int_rate, 200, 2800, 200, firdes.WIN_HAMMING, 6.76))
         self.audio_sink_0 = audio.sink(audio_rate, "plughw:0,0", True)
-        self.analog_agc2_xx_1 = analog.agc2_ff(1e-1, 1e-2, 0.1, 1.0)
-        self.analog_agc2_xx_1.set_max_gain(0.0)
+        self.analog_agc_xx_0 = analog.agc_cc(1e-3, 0.1, 1.0)
+        self.analog_agc_xx_0.set_max_gain(65536)
 
         ##################################################
         # Connections
         ##################################################
         self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.wxgui_waterfallsink2_1, 0))
-        self.connect((self.blocks_complex_to_real_1, 0), (self.digital_binary_slicer_fb_0, 0))
-        self.connect((self.ham_varicode_rx_0, 0), (self.blocks_message_sink_0, 0))
-        self.connect((self.digital_binary_slicer_fb_0, 0), (self.ham_varicode_rx_0, 0))
-        self.connect((self.digital_mpsk_receiver_cc_0, 0), (self.digital_diff_phasor_cc_0, 0))
-        self.connect((self.digital_diff_phasor_cc_0, 0), (self.blocks_complex_to_real_1, 0))
-        self.connect((self.freq_xlating_fir_filter_xxx_1, 0), (self.digital_mpsk_receiver_cc_0, 0))
         self.connect((self.osmosdr_source_0, 0), (self.wxgui_waterfallsink2_0, 0))
         self.connect((self.osmosdr_source_0, 0), (self.freq_xlating_fir_filter_xxx_0, 0))
-        self.connect((self.analog_agc2_xx_1, 0), (self.audio_sink_0, 0))
-        self.connect((self.blocks_complex_to_real_0, 0), (self.analog_agc2_xx_1, 0))
-        self.connect((self.band_pass_filter_0, 0), (self.freq_xlating_fir_filter_xxx_1, 0))
         self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.band_pass_filter_0, 0))
-        self.connect((self.band_pass_filter_0, 0), (self.blocks_complex_to_real_0, 0))
         self.connect((self.blocks_complex_to_real_0, 0), (self.wxgui_waterfallsink2_2, 0))
+        self.connect((self.digital_costas_loop_cc_0, 1), (self.wxgui_numbersink2_0, 0))
+        self.connect((self.freq_xlating_fir_filter_xxx_1, 0), (self.digital_costas_loop_cc_0, 0))
+        self.connect((self.digital_costas_loop_cc_0, 0), (self.wxgui_scopesink2_0, 0))
+        self.connect((self.digital_clock_recovery_mm_xx_0, 0), (self.digital_diff_phasor_cc_0, 0))
+        self.connect((self.digital_costas_loop_cc_0, 0), (self.digital_clock_recovery_mm_xx_0, 0))
+        self.connect((self.ham_varicode_rx_0, 0), (self.blocks_message_sink_0, 0))
+        self.connect((self.digital_binary_slicer_fb_0, 0), (self.ham_varicode_rx_0, 0))
+        self.connect((self.blocks_complex_to_real_1, 0), (self.digital_binary_slicer_fb_0, 0))
+        self.connect((self.digital_diff_phasor_cc_0, 0), (self.blocks_complex_to_real_1, 0))
+        self.connect((self.blocks_complex_to_real_0, 0), (self.audio_sink_0, 0))
+        self.connect((self.band_pass_filter_0, 0), (self.analog_agc_xx_0, 0))
+        self.connect((self.analog_agc_xx_0, 0), (self.blocks_complex_to_real_0, 0))
+        self.connect((self.analog_agc_xx_0, 0), (self.freq_xlating_fir_filter_xxx_1, 0))
+        self.connect((self.digital_clock_recovery_mm_xx_0, 0), (self.wxgui_scopesink2_1, 0))
 
 
 # QT sink close method reimplementation
-
-    def get_psk_offset(self):
-        return self.psk_offset
-
-    def set_psk_offset(self, psk_offset):
-        self.psk_offset = psk_offset
-        self._psk_offset_slider.set_value(self.psk_offset)
-        self._psk_offset_text_box.set_value(self.psk_offset)
-        self.set_variable_text_box_0(self.psk_offset)
-        self.freq_xlating_fir_filter_xxx_1.set_center_freq(self.psk_offset)
 
     def get_center_freq(self):
         return self.center_freq
@@ -288,13 +324,6 @@ class psk31_rx(grc_wxgui.top_block_gui):
         self.freq_xlating_fir_filter_xxx_0.set_center_freq(round(self.psk_center - self.center_freq,-3))
         self.set_psk_center(self.center_freq + 141000)
 
-    def get_variable_text_box_0(self):
-        return self.variable_text_box_0
-
-    def set_variable_text_box_0(self, variable_text_box_0):
-        self.variable_text_box_0 = variable_text_box_0
-        self._variable_text_box_0_text_box.set_value(self.variable_text_box_0)
-
     def get_samp_rate(self):
         return self.samp_rate
 
@@ -303,6 +332,15 @@ class psk31_rx(grc_wxgui.top_block_gui):
         self.osmosdr_source_0.set_sample_rate(self.samp_rate)
         self.wxgui_waterfallsink2_0.set_sample_rate(self.samp_rate)
         self.freq_xlating_fir_filter_xxx_0.set_taps((firdes.low_pass(1, self.samp_rate, 12000, 12000, firdes.WIN_HAMMING, 6.76)))
+
+    def get_psk_offset(self):
+        return self.psk_offset
+
+    def set_psk_offset(self, psk_offset):
+        self.psk_offset = psk_offset
+        self.freq_xlating_fir_filter_xxx_1.set_center_freq(self.psk_offset)
+        self._psk_offset_slider.set_value(self.psk_offset)
+        self._psk_offset_text_box.set_value(self.psk_offset)
 
     def get_psk_center(self):
         return self.psk_center
@@ -319,8 +357,8 @@ class psk31_rx(grc_wxgui.top_block_gui):
 
     def set_int_rate(self, int_rate):
         self.int_rate = int_rate
-        self.band_pass_filter_0.set_taps(firdes.complex_band_pass(1, self.int_rate, 200, 2800, 200, firdes.WIN_HAMMING, 6.76))
         self.wxgui_waterfallsink2_1.set_sample_rate(self.int_rate)
+        self.band_pass_filter_0.set_taps(firdes.complex_band_pass(1, self.int_rate, 200, 2800, 200, firdes.WIN_HAMMING, 6.76))
 
     def get_gain(self):
         return self.gain
@@ -346,7 +384,7 @@ class psk31_rx(grc_wxgui.top_block_gui):
     def set_audio_rate(self, audio_rate):
         self.audio_rate = audio_rate
         self.wxgui_waterfallsink2_2.set_sample_rate(self.audio_rate)
-        self.freq_xlating_fir_filter_xxx_1.set_taps((firdes.low_pass(1, self.audio_rate, 120, 40, firdes.WIN_HAMMING, 6.76)))
+        self.freq_xlating_fir_filter_xxx_1.set_taps((firdes.low_pass(10, self.audio_rate, 120, 40, firdes.WIN_HAMMING, 6.76)))
 
 if __name__ == '__main__':
     import ctypes
