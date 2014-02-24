@@ -2,7 +2,7 @@
 ##################################################
 # Gnuradio Python Flow Graph
 # Title: Chu
-# Generated: Mon Feb 24 07:15:48 2014
+# Generated: Mon Feb 24 07:19:06 2014
 ##################################################
 
 from gnuradio import analog
@@ -37,7 +37,6 @@ class chu(grc_wxgui.top_block_gui):
         # Variables
         ##################################################
         self.samp_rate = samp_rate = 1200000
-        self.volumes = volumes = [1,0]
         self.upconverter_lo_freq = upconverter_lo_freq = 125000000
         self.space_tone = space_tone = 2025
         self.offset = offset = 100000
@@ -146,15 +145,6 @@ class chu(grc_wxgui.top_block_gui):
         	y_axis_label="Counts",
         )
         self.nb.GetPage(2).Add(self.wxgui_scopesink2_0.win)
-        self._volumes_chooser = forms.drop_down(
-        	parent=self.GetWin(),
-        	value=self.volumes,
-        	callback=self.set_volumes,
-        	label='volumes',
-        	choices=[[1,0],[0,1]],
-        	labels=['AM','SSB'],
-        )
-        self.Add(self._volumes_chooser)
         self.osmosdr_source_0 = osmosdr.source( args="numchan=" + str(1) + " " + "" )
         self.osmosdr_source_0.set_sample_rate(samp_rate)
         self.osmosdr_source_0.set_center_freq(chu_freq - offset + upconverter_lo_freq, 0)
@@ -227,13 +217,6 @@ class chu(grc_wxgui.top_block_gui):
         self.band_pass_filter_0.set_taps(firdes.complex_band_pass(1, self.samp_rate / self.decimation, 200, 2800, 200, firdes.WIN_HAMMING, 6.76))
         self.analog_sig_source_x_1.set_sampling_freq(self.samp_rate / self.decimation)
         self.low_pass_filter_1.set_taps(firdes.low_pass(1000, self.samp_rate / 25, 200, 50, firdes.WIN_HAMMING, 6.76))
-
-    def get_volumes(self):
-        return self.volumes
-
-    def set_volumes(self, volumes):
-        self.volumes = volumes
-        self._volumes_chooser.set_value(self.volumes)
 
     def get_upconverter_lo_freq(self):
         return self.upconverter_lo_freq
