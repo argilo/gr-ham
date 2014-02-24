@@ -2,7 +2,7 @@
 ##################################################
 # Gnuradio Python Flow Graph
 # Title: Chu
-# Generated: Sun Feb 23 22:03:50 2014
+# Generated: Sun Feb 23 22:37:08 2014
 ##################################################
 
 from gnuradio import analog
@@ -159,7 +159,7 @@ class chu(grc_wxgui.top_block_gui):
         self.osmosdr_source_0.set_bandwidth(0, 0)
           
         self.low_pass_filter_1 = filter.fir_filter_ccf(10, firdes.low_pass(
-        	1, samp_rate / 25, 200, 50, firdes.WIN_HAMMING, 6.76))
+        	1000, samp_rate / 25, 200, 50, firdes.WIN_HAMMING, 6.76))
         self.low_pass_filter_0 = filter.fir_filter_ccf(decimation, firdes.low_pass(
         	1, samp_rate, 15000, 10000, firdes.WIN_HAMMING, 6.76))
         self.ham_chu_decode_0 = ham.chu_decode()
@@ -214,7 +214,7 @@ class chu(grc_wxgui.top_block_gui):
         self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, 15000, 10000, firdes.WIN_HAMMING, 6.76))
         self.wxgui_waterfallsink2_0.set_sample_rate(self.samp_rate / self.decimation)
         self.analog_sig_source_x_1.set_sampling_freq(self.samp_rate / self.decimation)
-        self.low_pass_filter_1.set_taps(firdes.low_pass(1, self.samp_rate / 25, 200, 50, firdes.WIN_HAMMING, 6.76))
+        self.low_pass_filter_1.set_taps(firdes.low_pass(1000, self.samp_rate / 25, 200, 50, firdes.WIN_HAMMING, 6.76))
 
     def get_upconverter_lo_freq(self):
         return self.upconverter_lo_freq
@@ -287,8 +287,8 @@ class chu(grc_wxgui.top_block_gui):
 
 if __name__ == '__main__':
     import ctypes
-    import sys
-    if sys.platform.startswith('linux'):
+    import os
+    if os.name == 'posix':
         try:
             x11 = ctypes.cdll.LoadLibrary('libX11.so')
             x11.XInitThreads()
