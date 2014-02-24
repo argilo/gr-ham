@@ -2,7 +2,7 @@
 ##################################################
 # Gnuradio Python Flow Graph
 # Title: Chu
-# Generated: Sun Feb 23 22:37:08 2014
+# Generated: Mon Feb 24 07:15:48 2014
 ##################################################
 
 from gnuradio import analog
@@ -37,6 +37,7 @@ class chu(grc_wxgui.top_block_gui):
         # Variables
         ##################################################
         self.samp_rate = samp_rate = 1200000
+        self.volumes = volumes = [1,0]
         self.upconverter_lo_freq = upconverter_lo_freq = 125000000
         self.space_tone = space_tone = 2025
         self.offset = offset = 100000
@@ -145,6 +146,15 @@ class chu(grc_wxgui.top_block_gui):
         	y_axis_label="Counts",
         )
         self.nb.GetPage(2).Add(self.wxgui_scopesink2_0.win)
+        self._volumes_chooser = forms.drop_down(
+        	parent=self.GetWin(),
+        	value=self.volumes,
+        	callback=self.set_volumes,
+        	label='volumes',
+        	choices=[[1,0],[0,1]],
+        	labels=['AM','SSB'],
+        )
+        self.Add(self._volumes_chooser)
         self.osmosdr_source_0 = osmosdr.source( args="numchan=" + str(1) + " " + "" )
         self.osmosdr_source_0.set_sample_rate(samp_rate)
         self.osmosdr_source_0.set_center_freq(chu_freq - offset + upconverter_lo_freq, 0)
@@ -164,11 +174,12 @@ class chu(grc_wxgui.top_block_gui):
         	1, samp_rate, 15000, 10000, firdes.WIN_HAMMING, 6.76))
         self.ham_chu_decode_0 = ham.chu_decode()
         self.digital_binary_slicer_fb_0 = digital.binary_slicer_fb()
-        self.dc_blocker_xx_0 = filter.dc_blocker_ff(32, True)
         self.blocks_multiply_xx_2 = blocks.multiply_vcc(1)
         self.blocks_multiply_xx_0 = blocks.multiply_vcc(1)
-        self.blocks_complex_to_mag_0_0 = blocks.complex_to_mag(1)
+        self.blocks_complex_to_real_0 = blocks.complex_to_real(1)
         self.blocks_char_to_float_0 = blocks.char_to_float(1, 1)
+        self.band_pass_filter_0 = filter.fir_filter_ccc(1, firdes.complex_band_pass(
+        	1, samp_rate / decimation, 200, 2800, 200, firdes.WIN_HAMMING, 6.76))
         self.audio_sink_0_0 = audio.sink(48000, "", True)
         self.analog_sig_source_x_1 = analog.sig_source_c(samp_rate / decimation, analog.GR_COS_WAVE, -(space_tone + mark_tone) / 2, 1, 0)
         self.analog_sig_source_x_0 = analog.sig_source_c(samp_rate, analog.GR_COS_WAVE, -offset, 1, 0)
@@ -182,13 +193,9 @@ class chu(grc_wxgui.top_block_gui):
         ##################################################
         self.connect((self.analog_sig_source_x_1, 0), (self.blocks_multiply_xx_2, 1))
         self.connect((self.analog_pll_carriertracking_cc_0, 0), (self.blocks_multiply_xx_2, 0))
-        self.connect((self.analog_pll_carriertracking_cc_0, 0), (self.blocks_complex_to_mag_0_0, 0))
         self.connect((self.analog_pll_carriertracking_cc_0, 0), (self.wxgui_waterfallsink2_0, 0))
         self.connect((self.low_pass_filter_0, 0), (self.analog_pll_carriertracking_cc_0, 0))
         self.connect((self.blocks_multiply_xx_0, 0), (self.low_pass_filter_0, 0))
-        self.connect((self.blocks_complex_to_mag_0_0, 0), (self.dc_blocker_xx_0, 0))
-        self.connect((self.dc_blocker_xx_0, 0), (self.analog_agc_xx_0, 0))
-        self.connect((self.analog_agc_xx_0, 0), (self.audio_sink_0_0, 0))
         self.connect((self.analog_sig_source_x_0, 0), (self.blocks_multiply_xx_0, 1))
         self.connect((self.osmosdr_source_0, 0), (self.blocks_multiply_xx_0, 0))
         self.connect((self.analog_quadrature_demod_cf_0, 0), (self.wxgui_scopesink2_0, 0))
@@ -199,6 +206,10 @@ class chu(grc_wxgui.top_block_gui):
         self.connect((self.low_pass_filter_1, 0), (self.wxgui_waterfallsink2_1, 0))
         self.connect((self.low_pass_filter_1, 0), (self.analog_quadrature_demod_cf_0, 0))
         self.connect((self.blocks_multiply_xx_2, 0), (self.low_pass_filter_1, 0))
+        self.connect((self.band_pass_filter_0, 0), (self.blocks_complex_to_real_0, 0))
+        self.connect((self.analog_agc_xx_0, 0), (self.audio_sink_0_0, 0))
+        self.connect((self.analog_pll_carriertracking_cc_0, 0), (self.band_pass_filter_0, 0))
+        self.connect((self.blocks_complex_to_real_0, 0), (self.analog_agc_xx_0, 0))
 
 
 # QT sink close method reimplementation
@@ -213,8 +224,16 @@ class chu(grc_wxgui.top_block_gui):
         self.osmosdr_source_0.set_sample_rate(self.samp_rate)
         self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, 15000, 10000, firdes.WIN_HAMMING, 6.76))
         self.wxgui_waterfallsink2_0.set_sample_rate(self.samp_rate / self.decimation)
+        self.band_pass_filter_0.set_taps(firdes.complex_band_pass(1, self.samp_rate / self.decimation, 200, 2800, 200, firdes.WIN_HAMMING, 6.76))
         self.analog_sig_source_x_1.set_sampling_freq(self.samp_rate / self.decimation)
         self.low_pass_filter_1.set_taps(firdes.low_pass(1000, self.samp_rate / 25, 200, 50, firdes.WIN_HAMMING, 6.76))
+
+    def get_volumes(self):
+        return self.volumes
+
+    def set_volumes(self, volumes):
+        self.volumes = volumes
+        self._volumes_chooser.set_value(self.volumes)
 
     def get_upconverter_lo_freq(self):
         return self.upconverter_lo_freq
@@ -229,8 +248,8 @@ class chu(grc_wxgui.top_block_gui):
     def set_space_tone(self, space_tone):
         self.space_tone = space_tone
         self.analog_sig_source_x_1.set_frequency(-(self.space_tone + self.mark_tone) / 2)
-        self.wxgui_waterfallsink2_1.set_baseband_freq((self.mark_tone + self.space_tone) / 2)
         self.analog_quadrature_demod_cf_0.set_gain(self.channel_rate / (3.1416*(self.mark_tone - self.space_tone)))
+        self.wxgui_waterfallsink2_1.set_baseband_freq((self.mark_tone + self.space_tone) / 2)
 
     def get_offset(self):
         return self.offset
@@ -246,8 +265,8 @@ class chu(grc_wxgui.top_block_gui):
     def set_mark_tone(self, mark_tone):
         self.mark_tone = mark_tone
         self.analog_sig_source_x_1.set_frequency(-(self.space_tone + self.mark_tone) / 2)
-        self.wxgui_waterfallsink2_1.set_baseband_freq((self.mark_tone + self.space_tone) / 2)
         self.analog_quadrature_demod_cf_0.set_gain(self.channel_rate / (3.1416*(self.mark_tone - self.space_tone)))
+        self.wxgui_waterfallsink2_1.set_baseband_freq((self.mark_tone + self.space_tone) / 2)
 
     def get_gain(self):
         return self.gain
@@ -264,6 +283,7 @@ class chu(grc_wxgui.top_block_gui):
     def set_decimation(self, decimation):
         self.decimation = decimation
         self.wxgui_waterfallsink2_0.set_sample_rate(self.samp_rate / self.decimation)
+        self.band_pass_filter_0.set_taps(firdes.complex_band_pass(1, self.samp_rate / self.decimation, 200, 2800, 200, firdes.WIN_HAMMING, 6.76))
         self.analog_sig_source_x_1.set_sampling_freq(self.samp_rate / self.decimation)
 
     def get_chu_freq(self):
@@ -280,15 +300,15 @@ class chu(grc_wxgui.top_block_gui):
 
     def set_channel_rate(self, channel_rate):
         self.channel_rate = channel_rate
-        self.wxgui_waterfallsink2_1.set_sample_rate(self.channel_rate)
         self.analog_quadrature_demod_cf_0.set_gain(self.channel_rate / (3.1416*(self.mark_tone - self.space_tone)))
         self.wxgui_scopesink2_0.set_sample_rate(self.channel_rate)
         self.wxgui_scopesink2_1.set_sample_rate(self.channel_rate)
+        self.wxgui_waterfallsink2_1.set_sample_rate(self.channel_rate)
 
 if __name__ == '__main__':
     import ctypes
-    import os
-    if os.name == 'posix':
+    import sys
+    if sys.platform.startswith('linux'):
         try:
             x11 = ctypes.cdll.LoadLibrary('libX11.so')
             x11.XInitThreads()
