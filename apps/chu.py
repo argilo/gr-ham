@@ -2,7 +2,7 @@
 ##################################################
 # Gnuradio Python Flow Graph
 # Title: Chu
-# Generated: Mon Feb 24 07:51:35 2014
+# Generated: Mon Feb 24 08:11:09 2014
 ##################################################
 
 from gnuradio import analog
@@ -91,7 +91,7 @@ class chu(grc_wxgui.top_block_gui):
         	self.nb.GetPage(1).GetWin(),
         	baseband_freq=(mark_tone + space_tone) / 2,
         	dynamic_range=50,
-        	ref_level=-50,
+        	ref_level=-20,
         	ref_scale=2.0,
         	sample_rate=channel_rate,
         	fft_size=512,
@@ -130,6 +130,8 @@ class chu(grc_wxgui.top_block_gui):
         	y_axis_label="Counts",
         )
         self.nb.GetPage(2).Add(self.wxgui_scopesink2_0.win)
+        self.root_raised_cosine_filter_0 = filter.fir_filter_fff(1, firdes.root_raised_cosine(
+        	1, channel_rate, 300, 0.35, 100))
         self.osmosdr_source_0 = osmosdr.source( args="numchan=" + str(1) + " " + "" )
         self.osmosdr_source_0.set_sample_rate(samp_rate)
         self.osmosdr_source_0.set_center_freq(chu_freq - offset + upconverter_lo_freq, 0)
@@ -174,8 +176,6 @@ class chu(grc_wxgui.top_block_gui):
         self.connect((self.blocks_multiply_xx_0, 0), (self.low_pass_filter_0, 0))
         self.connect((self.analog_sig_source_x_0, 0), (self.blocks_multiply_xx_0, 1))
         self.connect((self.osmosdr_source_0, 0), (self.blocks_multiply_xx_0, 0))
-        self.connect((self.analog_quadrature_demod_cf_0, 0), (self.wxgui_scopesink2_0, 0))
-        self.connect((self.analog_quadrature_demod_cf_0, 0), (self.digital_binary_slicer_fb_0, 0))
         self.connect((self.low_pass_filter_1, 0), (self.wxgui_waterfallsink2_1, 0))
         self.connect((self.low_pass_filter_1, 0), (self.analog_quadrature_demod_cf_0, 0))
         self.connect((self.blocks_multiply_xx_2, 0), (self.low_pass_filter_1, 0))
@@ -185,8 +185,11 @@ class chu(grc_wxgui.top_block_gui):
         self.connect((self.blocks_complex_to_real_0, 0), (self.analog_agc_xx_0, 0))
         self.connect((self.blocks_add_const_vxx_0, 0), (self.wxgui_scopesink2_0, 1))
         self.connect((self.blocks_char_to_float_0, 0), (self.blocks_add_const_vxx_0, 0))
-        self.connect((self.digital_binary_slicer_fb_0, 0), (self.ham_chu_decode_0, 0))
         self.connect((self.digital_binary_slicer_fb_0, 0), (self.blocks_char_to_float_0, 0))
+        self.connect((self.root_raised_cosine_filter_0, 0), (self.digital_binary_slicer_fb_0, 0))
+        self.connect((self.root_raised_cosine_filter_0, 0), (self.wxgui_scopesink2_0, 0))
+        self.connect((self.digital_binary_slicer_fb_0, 0), (self.ham_chu_decode_0, 0))
+        self.connect((self.analog_quadrature_demod_cf_0, 0), (self.root_raised_cosine_filter_0, 0))
 
 
 # QT sink close method reimplementation
@@ -218,8 +221,8 @@ class chu(grc_wxgui.top_block_gui):
     def set_space_tone(self, space_tone):
         self.space_tone = space_tone
         self.analog_sig_source_x_1.set_frequency(-(self.space_tone + self.mark_tone) / 2)
-        self.analog_quadrature_demod_cf_0.set_gain(self.channel_rate / (3.1416*(self.mark_tone - self.space_tone)))
         self.wxgui_waterfallsink2_1.set_baseband_freq((self.mark_tone + self.space_tone) / 2)
+        self.analog_quadrature_demod_cf_0.set_gain(self.channel_rate / (3.1416*(self.mark_tone - self.space_tone)))
 
     def get_offset(self):
         return self.offset
@@ -235,8 +238,8 @@ class chu(grc_wxgui.top_block_gui):
     def set_mark_tone(self, mark_tone):
         self.mark_tone = mark_tone
         self.analog_sig_source_x_1.set_frequency(-(self.space_tone + self.mark_tone) / 2)
-        self.analog_quadrature_demod_cf_0.set_gain(self.channel_rate / (3.1416*(self.mark_tone - self.space_tone)))
         self.wxgui_waterfallsink2_1.set_baseband_freq((self.mark_tone + self.space_tone) / 2)
+        self.analog_quadrature_demod_cf_0.set_gain(self.channel_rate / (3.1416*(self.mark_tone - self.space_tone)))
 
     def get_gain(self):
         return self.gain
@@ -270,9 +273,10 @@ class chu(grc_wxgui.top_block_gui):
 
     def set_channel_rate(self, channel_rate):
         self.channel_rate = channel_rate
-        self.analog_quadrature_demod_cf_0.set_gain(self.channel_rate / (3.1416*(self.mark_tone - self.space_tone)))
-        self.wxgui_waterfallsink2_1.set_sample_rate(self.channel_rate)
         self.wxgui_scopesink2_0.set_sample_rate(self.channel_rate)
+        self.wxgui_waterfallsink2_1.set_sample_rate(self.channel_rate)
+        self.analog_quadrature_demod_cf_0.set_gain(self.channel_rate / (3.1416*(self.mark_tone - self.space_tone)))
+        self.root_raised_cosine_filter_0.set_taps(firdes.root_raised_cosine(1, self.channel_rate, 300, 0.35, 100))
 
 if __name__ == '__main__':
     import ctypes
