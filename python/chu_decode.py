@@ -21,7 +21,7 @@
 import numpy
 from gnuradio import gr
 
-class chu_decode(gr.sync_block):
+class chu_decode(gr.basic_block):
     """
     docstring for block chu_decode
     """
@@ -31,13 +31,15 @@ class chu_decode(gr.sync_block):
     samples_in_message = 110 * samples_per_bit
 
     def __init__(self):
-        gr.sync_block.__init__(self,
+        gr.basic_block.__init__(self,
             name="chu_decode",
             in_sig=[numpy.int8],
             out_sig=None)
 
+    def forecast(self, noutput_items, ninput_items_required):
+        ninput_items_required[0] = (len(self.start_of_data) + self.samples_in_message) + 480
 
-    def work(self, input_items, output_items):
+    def general_work(self, input_items, output_items):
         in0 = input_items[0]
 
         # Wait until we have enough data for a whole packet
@@ -112,7 +114,9 @@ class chu_decode(gr.sync_block):
                 print "Decoding error."
                 print            
     
-            return index + len(self.start_of_data) + self.samples_in_message
+            self.consume_each(index + len(self.start_of_data) + self.samples_in_message)
+            return 0
 
         # We didn't find a preamble
-        return len(in0) - len(self.start_of_data) - self.samples_in_message
+        self.consume_each(len(in0) - len(self.start_of_data) - self.samples_in_message)
+        return 0
