@@ -2,7 +2,7 @@
 ##################################################
 # Gnuradio Python Flow Graph
 # Title: Chu
-# Generated: Mon Feb 24 07:19:06 2014
+# Generated: Mon Feb 24 07:32:32 2014
 ##################################################
 
 from gnuradio import analog
@@ -161,7 +161,7 @@ class chu(grc_wxgui.top_block_gui):
         self.low_pass_filter_1 = filter.fir_filter_ccf(10, firdes.low_pass(
         	1000, samp_rate / 25, 200, 50, firdes.WIN_HAMMING, 6.76))
         self.low_pass_filter_0 = filter.fir_filter_ccf(decimation, firdes.low_pass(
-        	1, samp_rate, 15000, 10000, firdes.WIN_HAMMING, 6.76))
+        	1, samp_rate, 20000, 5000, firdes.WIN_HAMMING, 6.76))
         self.ham_chu_decode_0 = ham.chu_decode()
         self.digital_binary_slicer_fb_0 = digital.binary_slicer_fb()
         self.blocks_multiply_xx_2 = blocks.multiply_vcc(1)
@@ -174,7 +174,7 @@ class chu(grc_wxgui.top_block_gui):
         self.analog_sig_source_x_1 = analog.sig_source_c(samp_rate / decimation, analog.GR_COS_WAVE, -(space_tone + mark_tone) / 2, 1, 0)
         self.analog_sig_source_x_0 = analog.sig_source_c(samp_rate, analog.GR_COS_WAVE, -offset, 1, 0)
         self.analog_quadrature_demod_cf_0 = analog.quadrature_demod_cf(channel_rate / (3.1416*(mark_tone - space_tone)))
-        self.analog_pll_carriertracking_cc_0 = analog.pll_carriertracking_cc(3.1416 / 500, 1, -1)
+        self.analog_pll_carriertracking_cc_0 = analog.pll_carriertracking_cc(3.1416 / 500, 1.8, -1.8)
         self.analog_agc_xx_0 = analog.agc_ff(1e-1, 0.02, 1.0)
         self.analog_agc_xx_0.set_max_gain(65536)
 
@@ -211,12 +211,12 @@ class chu(grc_wxgui.top_block_gui):
         self.samp_rate = samp_rate
         self.set_decimation(self.samp_rate / 48000)
         self.analog_sig_source_x_0.set_sampling_freq(self.samp_rate)
-        self.osmosdr_source_0.set_sample_rate(self.samp_rate)
-        self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, 15000, 10000, firdes.WIN_HAMMING, 6.76))
         self.wxgui_waterfallsink2_0.set_sample_rate(self.samp_rate / self.decimation)
         self.band_pass_filter_0.set_taps(firdes.complex_band_pass(1, self.samp_rate / self.decimation, 200, 2800, 200, firdes.WIN_HAMMING, 6.76))
         self.analog_sig_source_x_1.set_sampling_freq(self.samp_rate / self.decimation)
         self.low_pass_filter_1.set_taps(firdes.low_pass(1000, self.samp_rate / 25, 200, 50, firdes.WIN_HAMMING, 6.76))
+        self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, 20000, 5000, firdes.WIN_HAMMING, 6.76))
+        self.osmosdr_source_0.set_sample_rate(self.samp_rate)
 
     def get_upconverter_lo_freq(self):
         return self.upconverter_lo_freq
@@ -256,9 +256,9 @@ class chu(grc_wxgui.top_block_gui):
 
     def set_gain(self, gain):
         self.gain = gain
-        self.osmosdr_source_0.set_gain(self.gain, 0)
         self._gain_slider.set_value(self.gain)
         self._gain_text_box.set_value(self.gain)
+        self.osmosdr_source_0.set_gain(self.gain, 0)
 
     def get_decimation(self):
         return self.decimation
@@ -275,8 +275,8 @@ class chu(grc_wxgui.top_block_gui):
     def set_chu_freq(self, chu_freq):
         self.chu_freq = chu_freq
         self._chu_freq_chooser.set_value(self.chu_freq)
-        self.osmosdr_source_0.set_center_freq(self.chu_freq - self.offset + self.upconverter_lo_freq, 0)
         self.wxgui_waterfallsink2_0.set_baseband_freq(self.chu_freq)
+        self.osmosdr_source_0.set_center_freq(self.chu_freq - self.offset + self.upconverter_lo_freq, 0)
 
     def get_channel_rate(self):
         return self.channel_rate
