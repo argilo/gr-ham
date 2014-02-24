@@ -2,7 +2,7 @@
 ##################################################
 # Gnuradio Python Flow Graph
 # Title: Chu
-# Generated: Mon Feb 24 07:32:32 2014
+# Generated: Mon Feb 24 07:51:35 2014
 ##################################################
 
 from gnuradio import analog
@@ -52,7 +52,6 @@ class chu(grc_wxgui.top_block_gui):
         self.nb = self.nb = wx.Notebook(self.GetWin(), style=wx.NB_TOP)
         self.nb.AddPage(grc_wxgui.Panel(self.nb), "48 kHz")
         self.nb.AddPage(grc_wxgui.Panel(self.nb), "4.8 kHz")
-        self.nb.AddPage(grc_wxgui.Panel(self.nb), "Analog scope")
         self.nb.AddPage(grc_wxgui.Panel(self.nb), "Data scope")
         self.GridAdd(self.nb, 2, 0, 1, 1)
         _gain_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -117,20 +116,6 @@ class chu(grc_wxgui.top_block_gui):
         	win=window.hamming,
         )
         self.nb.GetPage(0).Add(self.wxgui_waterfallsink2_0.win)
-        self.wxgui_scopesink2_1 = scopesink2.scope_sink_f(
-        	self.nb.GetPage(3).GetWin(),
-        	title="Scope Plot",
-        	sample_rate=channel_rate,
-        	v_scale=0.5,
-        	v_offset=0.5,
-        	t_scale=11.0 / 300,
-        	ac_couple=False,
-        	xy_mode=False,
-        	num_inputs=1,
-        	trig_mode=wxgui.TRIG_MODE_AUTO,
-        	y_axis_label="Counts",
-        )
-        self.nb.GetPage(3).Add(self.wxgui_scopesink2_1.win)
         self.wxgui_scopesink2_0 = scopesink2.scope_sink_f(
         	self.nb.GetPage(2).GetWin(),
         	title="Scope Plot",
@@ -140,7 +125,7 @@ class chu(grc_wxgui.top_block_gui):
         	t_scale=0.050,
         	ac_couple=False,
         	xy_mode=False,
-        	num_inputs=1,
+        	num_inputs=2,
         	trig_mode=wxgui.TRIG_MODE_AUTO,
         	y_axis_label="Counts",
         )
@@ -167,7 +152,8 @@ class chu(grc_wxgui.top_block_gui):
         self.blocks_multiply_xx_2 = blocks.multiply_vcc(1)
         self.blocks_multiply_xx_0 = blocks.multiply_vcc(1)
         self.blocks_complex_to_real_0 = blocks.complex_to_real(1)
-        self.blocks_char_to_float_0 = blocks.char_to_float(1, 1)
+        self.blocks_char_to_float_0 = blocks.char_to_float(1, 0.5)
+        self.blocks_add_const_vxx_0 = blocks.add_const_vff((-1, ))
         self.band_pass_filter_0 = filter.fir_filter_ccc(1, firdes.complex_band_pass(
         	1, samp_rate / decimation, 200, 2800, 200, firdes.WIN_HAMMING, 6.76))
         self.audio_sink_0_0 = audio.sink(48000, "", True)
@@ -189,10 +175,7 @@ class chu(grc_wxgui.top_block_gui):
         self.connect((self.analog_sig_source_x_0, 0), (self.blocks_multiply_xx_0, 1))
         self.connect((self.osmosdr_source_0, 0), (self.blocks_multiply_xx_0, 0))
         self.connect((self.analog_quadrature_demod_cf_0, 0), (self.wxgui_scopesink2_0, 0))
-        self.connect((self.digital_binary_slicer_fb_0, 0), (self.blocks_char_to_float_0, 0))
-        self.connect((self.blocks_char_to_float_0, 0), (self.wxgui_scopesink2_1, 0))
         self.connect((self.analog_quadrature_demod_cf_0, 0), (self.digital_binary_slicer_fb_0, 0))
-        self.connect((self.digital_binary_slicer_fb_0, 0), (self.ham_chu_decode_0, 0))
         self.connect((self.low_pass_filter_1, 0), (self.wxgui_waterfallsink2_1, 0))
         self.connect((self.low_pass_filter_1, 0), (self.analog_quadrature_demod_cf_0, 0))
         self.connect((self.blocks_multiply_xx_2, 0), (self.low_pass_filter_1, 0))
@@ -200,6 +183,10 @@ class chu(grc_wxgui.top_block_gui):
         self.connect((self.analog_agc_xx_0, 0), (self.audio_sink_0_0, 0))
         self.connect((self.analog_pll_carriertracking_cc_0, 0), (self.band_pass_filter_0, 0))
         self.connect((self.blocks_complex_to_real_0, 0), (self.analog_agc_xx_0, 0))
+        self.connect((self.blocks_add_const_vxx_0, 0), (self.wxgui_scopesink2_0, 1))
+        self.connect((self.blocks_char_to_float_0, 0), (self.blocks_add_const_vxx_0, 0))
+        self.connect((self.digital_binary_slicer_fb_0, 0), (self.ham_chu_decode_0, 0))
+        self.connect((self.digital_binary_slicer_fb_0, 0), (self.blocks_char_to_float_0, 0))
 
 
 # QT sink close method reimplementation
@@ -284,9 +271,8 @@ class chu(grc_wxgui.top_block_gui):
     def set_channel_rate(self, channel_rate):
         self.channel_rate = channel_rate
         self.analog_quadrature_demod_cf_0.set_gain(self.channel_rate / (3.1416*(self.mark_tone - self.space_tone)))
-        self.wxgui_scopesink2_0.set_sample_rate(self.channel_rate)
-        self.wxgui_scopesink2_1.set_sample_rate(self.channel_rate)
         self.wxgui_waterfallsink2_1.set_sample_rate(self.channel_rate)
+        self.wxgui_scopesink2_0.set_sample_rate(self.channel_rate)
 
 if __name__ == '__main__':
     import ctypes
