@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <block>
-  <name>varicode_rx</name>
+  <name>Varicode Decoder</name>
   <key>ham_varicode_rx</key>
-  <category>ham</category>
+  <category>Ham</category>
   <import>import ham</import>
   <make>ham.varicode_rx()</make>
   <!-- Make one 'param' node for every Parameter you want settable from the GUI.

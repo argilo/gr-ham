@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <block>
-  <name>chu_decode</name>
+  <name>CHU Decoder</name>
   <key>ham_chu_decode</key>
-  <category>ham</category>
+  <category>Ham</category>
   <import>import ham</import>
   <make>ham.chu_decode()</make>
   <!-- Make one 'param' node for every Parameter you want settable from the GUI.
