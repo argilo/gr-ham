@@ -48,6 +48,7 @@ if _RTLD_GLOBAL != 0:
 from chu_decode import chu_decode
 from dstar_rx import dstar_rx
 from varicode_rx import varicode_rx
+from varicode_tx import varicode_tx
 #
 
 # ----------------------------------------------------------------

@@ -20,5 +20,6 @@
 install(FILES
     ham_chu_decode.xml
     ham_dstar_rx.xml
-    ham_varicode_rx.xml DESTINATION share/gnuradio/grc/blocks
+    ham_varicode_rx.xml
+    ham_varicode_tx.xml  DESTINATION share/gnuradio/grc/blocks
 )

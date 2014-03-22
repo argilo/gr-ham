@@ -33,7 +33,8 @@ GR_PYTHON_INSTALL(
     __init__.py
     chu_decode.py
     dstar_rx.py
-    varicode_rx.py DESTINATION ${GR_PYTHON_DIR}/ham
+    varicode_rx.py
+    varicode_tx.py DESTINATION ${GR_PYTHON_DIR}/ham
 )
 
 ########################################################################
