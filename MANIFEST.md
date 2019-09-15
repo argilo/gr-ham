@@ -4,6 +4,7 @@ tags:
   - amateur radio
   - PSK31
   - varicode
+  - CHU
   - D-STAR
 author:
   - Clayton Smith <argilo@gmail.com>
