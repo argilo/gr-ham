@@ -25,20 +25,21 @@ from __future__ import print_function
 import numpy
 from gnuradio import gr
 
+
 class chu_decode(gr.sync_block):
     """
     docstring for block chu_decode
     """
 
-    start_of_data = numpy.array([1] * 533 + [0], dtype=numpy.int8).tostring() # Preamble
-    samples_per_bit = 4800 // 300 # Sample rate / baud rate
+    start_of_data = numpy.array([1] * 533 + [0], dtype=numpy.int8).tostring()  # Preamble
+    samples_per_bit = 4800 // 300  # Sample rate / baud rate
     samples_in_message = 110 * samples_per_bit
 
     def __init__(self):
         gr.sync_block.__init__(self,
-            name="chu_decode",
-            in_sig=[numpy.int8],
-            out_sig=None)
+                               name="chu_decode",
+                               in_sig=[numpy.int8],
+                               out_sig=None)
 
     def work(self, input_items, output_items):
         in0 = input_items[0]
@@ -54,7 +55,7 @@ class chu_decode(gr.sync_block):
             databits = ''
             for bit in range(110):
                 offset = startoffset + self.samples_per_bit * bit
-                bitsamples = in0[offset : offset + self.samples_per_bit]
+                bitsamples = in0[offset:offset + self.samples_per_bit]
                 disc = 0
                 for sample in bitsamples:
                     disc = disc - 1 + 2 * sample
@@ -65,7 +66,7 @@ class chu_decode(gr.sync_block):
 
             # Decode bytes
             tenbytes = []
-            for x in range(0,110,11):
+            for x in range(0, 110, 11):
                 byte = databits[x:x+11]
                 if byte[0] == '0' and byte[9] == '1' and byte[10] == '1':
                     byteord = 0

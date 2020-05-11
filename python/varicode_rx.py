@@ -87,7 +87,9 @@ decode = {
     '11011111'   : 'x',       '1011101'    : 'y',
     '111010101'  : 'z',       '1010110111' : '{',
     '110111011'  : '|',       '1010110101' : '}',
-    '1011010111' : '~',       '1110110101' : '\x7F' }
+    '1011010111' : '~',       '1110110101' : '\x7F'
+}
+
 
 class varicode_rx(gr.basic_block):
     """
@@ -95,9 +97,9 @@ class varicode_rx(gr.basic_block):
     """
     def __init__(self):
         gr.basic_block.__init__(self,
-            name="varicode_rx",
-            in_sig=[numpy.int8],
-            out_sig=[numpy.int8])
+                                name="varicode_rx",
+                                in_sig=[numpy.int8],
+                                out_sig=[numpy.int8])
 
     def forecast(self, noutput_items, ninput_items_required):
         ninput_items_required[0] = noutput_items * 8

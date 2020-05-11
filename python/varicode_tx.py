@@ -87,7 +87,9 @@ encode = {
     'x'    : '11011111',     'y'    : '1011101',
     'z'    : '111010101',    '{'    : '1010110111',
     '|'    : '110111011',    '}'    : '1010110101',
-    '~'    : '1011010111',   '\x7F' : '1110110101' }
+    '~'    : '1011010111',   '\x7F' : '1110110101'
+}
+
 
 class varicode_tx(gr.basic_block):
     """
@@ -95,9 +97,9 @@ class varicode_tx(gr.basic_block):
     """
     def __init__(self):
         gr.basic_block.__init__(self,
-            name="varicode_tx",
-            in_sig=[numpy.int8],
-            out_sig=[numpy.int8])
+                                name="varicode_tx",
+                                in_sig=[numpy.int8],
+                                out_sig=[numpy.int8])
 
     def forecast(self, noutput_items, ninput_items_required):
         ninput_items_required[0] = noutput_items

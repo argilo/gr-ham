@@ -24,43 +24,44 @@ from __future__ import print_function
 import numpy
 from gnuradio import gr
 
+
 class dstar_rx(gr.sync_block):
     """
     docstring for block dstar_rx
     """
 
     VOICE_FRAME_LEN = 72
-    DATA_FRAME_LEN  = 24
+    DATA_FRAME_LEN = 24
     TOTAL_FRAME_LEN = 96
-    INPUT_RATE  = 4800
+    INPUT_RATE = 4800
     OUTPUT_RATE = 8000
 
-    bit_syn   = numpy.array([1,0]*16, dtype=numpy.int8).tostring()
-    frame_syn = numpy.array([1,1,1,0,1,1,0,0,1,0,1,0,0,0,0], dtype=numpy.int8).tostring()
-    data_sync = numpy.array([1,0]*5 + [1,1,0,1,0,0,0]*2, dtype=numpy.int8).tostring()
+    bit_syn = numpy.array([1, 0]*16, dtype=numpy.int8).tostring()
+    frame_syn = numpy.array([1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0], dtype=numpy.int8).tostring()
+    data_sync = numpy.array([1, 0]*5 + [1, 1, 0, 1, 0, 0, 0]*2, dtype=numpy.int8).tostring()
     data_term = "10" * 16 + "000100110101111" + "0"
 
-    HEADER_LEN       = 660
+    HEADER_LEN = 660
     WHOLE_HEADER_LEN = HEADER_LEN + len(bit_syn) + len(frame_syn)
 
     DTMF_TONES = "123A456B789C*0#D"
 
-    STATE_IDLE     = 1
+    STATE_IDLE = 1
     STATE_RX_VOICE = 2
 
     current_state = STATE_IDLE
 
     def __init__(self):
         gr.sync_block.__init__(self,
-            name="dstar_rx",
-            in_sig=[numpy.int8],
-            out_sig=None)
+                               name="dstar_rx",
+                               in_sig=[numpy.int8],
+                               out_sig=None)
         self.f = open("dstar-audio.dst", "wb")
         self.f.write(".dst".encode())
 
     def unscramble(self, header):
-        state = 0b1111111 # Initial state
-        poly = 0b10010001 # x^7 + x^4 + 1
+        state = 0b1111111  # Initial state
+        poly = 0b10010001  # x^7 + x^4 + 1
         for x in range(len(header)):
             state <<= 1
             state |= ((state >> 7) & 1) ^ ((state >> 4) & 1)
@@ -92,7 +93,7 @@ class dstar_rx(gr.sync_block):
         header = self.unscramble(header)
         header = self.deinterleave_header(header)
         header = self.viterbi_header(header)
-        header = self.reverse_bytes(header.tostring()).replace('\x00','0').replace('\x01','1')
+        header = self.reverse_bytes(header.tostring()).replace('\x00', '0').replace('\x01', '1')
         header_bytes = ''
         for x in range(0, len(header), 8):
             bits = header[x:x+8]
@@ -110,7 +111,7 @@ class dstar_rx(gr.sync_block):
         pr = i << 4
 
         for x in range(24):
-            pr = ((173 * pr) + 13849) & 0xFFFF;
+            pr = ((173 * pr) + 13849) & 0xFFFF
             if ((pr & 0x8000) != 0):
                 prng |= mask
             mask >>= 1
@@ -156,7 +157,7 @@ class dstar_rx(gr.sync_block):
                 return 0
 
             # We have enough data for a voice frame & a data frame
-            bits = in0[0:self.VOICE_FRAME_LEN + len(self.data_term)].tostring().replace('\x00','0').replace('\x01','1')
+            bits = in0[0:self.VOICE_FRAME_LEN + len(self.data_term)].tostring().replace('\x00', '0').replace('\x01', '1')
             bits = self.deinterleave_voice(self.reverse_bytes(bits[0:self.VOICE_FRAME_LEN])) + bits[self.VOICE_FRAME_LEN:]
 
             first_word = int(bits[0:12], 2)
@@ -165,7 +166,7 @@ class dstar_rx(gr.sync_block):
             voice_bits = self.golay(bits[0:24]) + self.golay('{0:024b}'.format(second_code_word)) + bits[48:72]
             self.f.write(bytes([int(voice_bits[0:8], 2), int(voice_bits[8:16], 2), int(voice_bits[16:24], 2), int(voice_bits[24:32], 2), int(voice_bits[32:40], 2), int(voice_bits[40:48], 2)]))
             self.f.flush()
-            data_bits = self.reverse_bytes(self.unscramble(in0[72:96]).tostring().replace('\x00','0').replace('\x01','1'))
+            data_bits = self.reverse_bytes(self.unscramble(in0[72:96]).tostring().replace('\x00', '0').replace('\x01', '1'))
 
             fund_freq = int(voice_bits[0:7], 2)
             if fund_freq == 124:
