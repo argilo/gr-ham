@@ -1,25 +1,26 @@
 #!/usr/bin/env python
-# 
-# Copyright 2014 Clayton Smith.
-# 
+# -*- coding: utf-8 -*-
+#
+# Copyright 2014,2020 Clayton Smith.
+#
 # This is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3, or (at your option)
 # any later version.
-# 
+#
 # This software is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this software; see the file COPYING.  If not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
-# 
+#
+
 
 import numpy
-import sys
 from gnuradio import gr
 
 decode = {
@@ -107,7 +108,7 @@ class varicode_rx(gr.basic_block):
         num_consumed = 0
         num_produced = 0
 
-        in_string = in0.tostring().replace('\x00','0').replace('\x01','1')
+        in_string = "".join(str(b) for b in in0)
 
         # Get rid of leading zeroes
         while len(in_string) > 0 and in_string[0] == '0':

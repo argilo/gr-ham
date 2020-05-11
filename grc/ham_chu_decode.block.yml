@@ -1,0 +1,13 @@
+id: ham_chu_decode
+label: CHU Decoder
+category: '[Ham]'
+
+templates:
+  imports: import ham
+  make: ham.chu_decode()
+
+inputs:
+- label: in
+  dtype: byte
+
+file_format: 1

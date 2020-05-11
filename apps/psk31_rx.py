@@ -1,337 +1,426 @@
-#!/usr/bin/env python
-##################################################
-# Gnuradio Python Flow Graph
-# Title: Psk31 Rx
-# Generated: Sun Jan  5 13:36:51 2014
-##################################################
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
+#
+# SPDX-License-Identifier: GPL-3.0
+#
+# GNU Radio Python Flow Graph
+# Title: Psk31 Rx
+# GNU Radio version: 3.8.1.0
+
+from distutils.version import StrictVersion
+
+if __name__ == '__main__':
+    import ctypes
+    import sys
+    if sys.platform.startswith('linux'):
+        try:
+            x11 = ctypes.cdll.LoadLibrary('libX11.so')
+            x11.XInitThreads()
+        except:
+            print("Warning: failed to XInitThreads()")
+
+from PyQt5 import Qt
+from gnuradio import qtgui
+from gnuradio.filter import firdes
+import sip
 from gnuradio import analog
 from gnuradio import audio
 from gnuradio import blocks
 from gnuradio import digital
-from gnuradio import eng_notation
 from gnuradio import filter
 from gnuradio import gr
-from gnuradio import wxgui
-from gnuradio.eng_option import eng_option
-from gnuradio.fft import window
-from gnuradio.filter import firdes
-from gnuradio.wxgui import forms
-from gnuradio.wxgui import numbersink2
-from gnuradio.wxgui import scopesink2
-from gnuradio.wxgui import termsink
-from gnuradio.wxgui import waterfallsink2
-from grc_gnuradio import wxgui as grc_wxgui
-from optparse import OptionParser
+import sys
+import signal
+from argparse import ArgumentParser
+from gnuradio.eng_arg import eng_float, intx
+from gnuradio import eng_notation
+from gnuradio.qtgui import Range, RangeWidget
 import ham
 import math
 import osmosdr
-import wx
+import time
 
-class psk31_rx(grc_wxgui.top_block_gui):
+from gnuradio import qtgui
+
+class psk31_rx(gr.top_block, Qt.QWidget):
 
     def __init__(self):
-        grc_wxgui.top_block_gui.__init__(self, title="Psk31 Rx")
-        _icon_path = "/usr/share/icons/hicolor/32x32/apps/gnuradio-grc.png"
-        self.SetIcon(wx.Icon(_icon_path, wx.BITMAP_TYPE_ANY))
+        gr.top_block.__init__(self, "Psk31 Rx")
+        Qt.QWidget.__init__(self)
+        self.setWindowTitle("Psk31 Rx")
+        qtgui.util.check_set_qss()
+        try:
+            self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
+        except:
+            pass
+        self.top_scroll_layout = Qt.QVBoxLayout()
+        self.setLayout(self.top_scroll_layout)
+        self.top_scroll = Qt.QScrollArea()
+        self.top_scroll.setFrameStyle(Qt.QFrame.NoFrame)
+        self.top_scroll_layout.addWidget(self.top_scroll)
+        self.top_scroll.setWidgetResizable(True)
+        self.top_widget = Qt.QWidget()
+        self.top_scroll.setWidget(self.top_widget)
+        self.top_layout = Qt.QVBoxLayout(self.top_widget)
+        self.top_grid_layout = Qt.QGridLayout()
+        self.top_layout.addLayout(self.top_grid_layout)
+
+        self.settings = Qt.QSettings("GNU Radio", "psk31_rx")
+
+        try:
+            if StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
+                self.restoreGeometry(self.settings.value("geometry").toByteArray())
+            else:
+                self.restoreGeometry(self.settings.value("geometry"))
+        except:
+            pass
 
         ##################################################
         # Variables
         ##################################################
-        self.center_freq = center_freq = 441000000
+        self.center_freq = center_freq = 441800000
         self.samp_rate = samp_rate = 960000
         self.psk_offset = psk_offset = 1000
         self.psk_center = psk_center = center_freq + 141000
         self.int_rate = int_rate = 48000
-        self.gain = gain = 30
-        self.corr = corr = 0
+        self.gain = gain = 10
         self.audio_rate = audio_rate = 8000
-
-        ##################################################
-        # Message Queues
-        ##################################################
-        blocks_message_sink_0_msgq_out = wxgui_termsink_0_msgq_in = gr.msg_queue(2)
 
         ##################################################
         # Blocks
         ##################################################
-        _psk_offset_sizer = wx.BoxSizer(wx.VERTICAL)
-        self._psk_offset_text_box = forms.text_box(
-        	parent=self.GetWin(),
-        	sizer=_psk_offset_sizer,
-        	value=self.psk_offset,
-        	callback=self.set_psk_offset,
-        	label="PSK offset",
-        	converter=forms.float_converter(),
-        	proportion=0,
+        self._psk_offset_range = Range(0, 3000, 10, 1000, 200)
+        self._psk_offset_win = RangeWidget(self._psk_offset_range, self.set_psk_offset, 'PSK offset', "counter_slider", float)
+        self.top_grid_layout.addWidget(self._psk_offset_win)
+        self._psk_center_range = Range(center_freq + 110000, center_freq + 150000, 1000, center_freq + 141000, 200)
+        self._psk_center_win = RangeWidget(self._psk_center_range, self.set_psk_center, 'Tuning', "counter_slider", float)
+        self.top_grid_layout.addWidget(self._psk_center_win)
+        self._gain_range = Range(0, 50, 0.4, 10, 200)
+        self._gain_win = RangeWidget(self._gain_range, self.set_gain, 'RX gain', "counter_slider", float)
+        self.top_grid_layout.addWidget(self._gain_win)
+        self.qtgui_waterfall_sink_x_2 = qtgui.waterfall_sink_f(
+            1024, #size
+            firdes.WIN_BLACKMAN_hARRIS, #wintype
+            0, #fc
+            samp_rate / 120, #bw
+            "", #name
+            1 #number of inputs
         )
-        self._psk_offset_slider = forms.slider(
-        	parent=self.GetWin(),
-        	sizer=_psk_offset_sizer,
-        	value=self.psk_offset,
-        	callback=self.set_psk_offset,
-        	minimum=0,
-        	maximum=3000,
-        	num_steps=300,
-        	style=wx.SL_HORIZONTAL,
-        	cast=float,
-        	proportion=1,
+        self.qtgui_waterfall_sink_x_2.set_update_time(0.10)
+        self.qtgui_waterfall_sink_x_2.enable_grid(False)
+        self.qtgui_waterfall_sink_x_2.enable_axis_labels(True)
+
+
+        self.qtgui_waterfall_sink_x_2.set_plot_pos_half(not False)
+
+        labels = ['', '', '', '', '',
+                  '', '', '', '', '']
+        colors = [0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0]
+        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
+                  1.0, 1.0, 1.0, 1.0, 1.0]
+
+        for i in range(1):
+            if len(labels[i]) == 0:
+                self.qtgui_waterfall_sink_x_2.set_line_label(i, "Data {0}".format(i))
+            else:
+                self.qtgui_waterfall_sink_x_2.set_line_label(i, labels[i])
+            self.qtgui_waterfall_sink_x_2.set_color_map(i, colors[i])
+            self.qtgui_waterfall_sink_x_2.set_line_alpha(i, alphas[i])
+
+        self.qtgui_waterfall_sink_x_2.set_intensity_range(-140, 10)
+
+        self._qtgui_waterfall_sink_x_2_win = sip.wrapinstance(self.qtgui_waterfall_sink_x_2.pyqwidget(), Qt.QWidget)
+        self.top_grid_layout.addWidget(self._qtgui_waterfall_sink_x_2_win)
+        self.qtgui_waterfall_sink_x_1 = qtgui.waterfall_sink_c(
+            1024, #size
+            firdes.WIN_BLACKMAN_hARRIS, #wintype
+            0, #fc
+            samp_rate / 20, #bw
+            "", #name
+            1 #number of inputs
         )
-        self.GridAdd(_psk_offset_sizer, 1, 0, 1, 2)
-        _psk_center_sizer = wx.BoxSizer(wx.VERTICAL)
-        self._psk_center_text_box = forms.text_box(
-        	parent=self.GetWin(),
-        	sizer=_psk_center_sizer,
-        	value=self.psk_center,
-        	callback=self.set_psk_center,
-        	label="Tuning",
-        	converter=forms.float_converter(),
-        	proportion=0,
+        self.qtgui_waterfall_sink_x_1.set_update_time(0.10)
+        self.qtgui_waterfall_sink_x_1.enable_grid(False)
+        self.qtgui_waterfall_sink_x_1.enable_axis_labels(True)
+
+
+
+        labels = ['', '', '', '', '',
+                  '', '', '', '', '']
+        colors = [0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0]
+        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
+                  1.0, 1.0, 1.0, 1.0, 1.0]
+
+        for i in range(1):
+            if len(labels[i]) == 0:
+                self.qtgui_waterfall_sink_x_1.set_line_label(i, "Data {0}".format(i))
+            else:
+                self.qtgui_waterfall_sink_x_1.set_line_label(i, labels[i])
+            self.qtgui_waterfall_sink_x_1.set_color_map(i, colors[i])
+            self.qtgui_waterfall_sink_x_1.set_line_alpha(i, alphas[i])
+
+        self.qtgui_waterfall_sink_x_1.set_intensity_range(-140, 10)
+
+        self._qtgui_waterfall_sink_x_1_win = sip.wrapinstance(self.qtgui_waterfall_sink_x_1.pyqwidget(), Qt.QWidget)
+        self.top_grid_layout.addWidget(self._qtgui_waterfall_sink_x_1_win)
+        self.qtgui_waterfall_sink_x_0 = qtgui.waterfall_sink_c(
+            1024, #size
+            firdes.WIN_BLACKMAN_hARRIS, #wintype
+            center_freq, #fc
+            samp_rate, #bw
+            "", #name
+            1 #number of inputs
         )
-        self._psk_center_slider = forms.slider(
-        	parent=self.GetWin(),
-        	sizer=_psk_center_sizer,
-        	value=self.psk_center,
-        	callback=self.set_psk_center,
-        	minimum=center_freq + 110000,
-        	maximum=center_freq + 150000,
-        	num_steps=40,
-        	style=wx.SL_HORIZONTAL,
-        	cast=float,
-        	proportion=1,
+        self.qtgui_waterfall_sink_x_0.set_update_time(0.10)
+        self.qtgui_waterfall_sink_x_0.enable_grid(False)
+        self.qtgui_waterfall_sink_x_0.enable_axis_labels(True)
+
+
+
+        labels = ['', '', '', '', '',
+                  '', '', '', '', '']
+        colors = [0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0]
+        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
+                  1.0, 1.0, 1.0, 1.0, 1.0]
+
+        for i in range(1):
+            if len(labels[i]) == 0:
+                self.qtgui_waterfall_sink_x_0.set_line_label(i, "Data {0}".format(i))
+            else:
+                self.qtgui_waterfall_sink_x_0.set_line_label(i, labels[i])
+            self.qtgui_waterfall_sink_x_0.set_color_map(i, colors[i])
+            self.qtgui_waterfall_sink_x_0.set_line_alpha(i, alphas[i])
+
+        self.qtgui_waterfall_sink_x_0.set_intensity_range(-140, 10)
+
+        self._qtgui_waterfall_sink_x_0_win = sip.wrapinstance(self.qtgui_waterfall_sink_x_0.pyqwidget(), Qt.QWidget)
+        self.top_grid_layout.addWidget(self._qtgui_waterfall_sink_x_0_win)
+        self.qtgui_time_sink_x_1 = qtgui.time_sink_c(
+            1024, #size
+            samp_rate / 120, #samp_rate
+            "", #name
+            1 #number of inputs
         )
-        self.GridAdd(_psk_center_sizer, 0, 0, 1, 2)
-        self.nb = self.nb = wx.Notebook(self.GetWin(), style=wx.NB_TOP)
-        self.nb.AddPage(grc_wxgui.Panel(self.nb), "960 kHz")
-        self.nb.AddPage(grc_wxgui.Panel(self.nb), "48 kHz")
-        self.nb.AddPage(grc_wxgui.Panel(self.nb), "4 kHz")
-        self.nb.AddPage(grc_wxgui.Panel(self.nb), "I/Q scope")
-        self.nb.AddPage(grc_wxgui.Panel(self.nb), "Constellation")
-        self.GridAdd(self.nb, 3, 0, 1, 2)
-        _gain_sizer = wx.BoxSizer(wx.VERTICAL)
-        self._gain_text_box = forms.text_box(
-        	parent=self.GetWin(),
-        	sizer=_gain_sizer,
-        	value=self.gain,
-        	callback=self.set_gain,
-        	label='gain',
-        	converter=forms.float_converter(),
-        	proportion=0,
+        self.qtgui_time_sink_x_1.set_update_time(0.10)
+        self.qtgui_time_sink_x_1.set_y_axis(-1, 1)
+
+        self.qtgui_time_sink_x_1.set_y_label('Amplitude', "")
+
+        self.qtgui_time_sink_x_1.enable_tags(True)
+        self.qtgui_time_sink_x_1.set_trigger_mode(qtgui.TRIG_MODE_FREE, qtgui.TRIG_SLOPE_POS, 0.0, 0, 0, "")
+        self.qtgui_time_sink_x_1.enable_autoscale(False)
+        self.qtgui_time_sink_x_1.enable_grid(False)
+        self.qtgui_time_sink_x_1.enable_axis_labels(True)
+        self.qtgui_time_sink_x_1.enable_control_panel(False)
+        self.qtgui_time_sink_x_1.enable_stem_plot(False)
+
+
+        labels = ['Signal 1', 'Signal 2', 'Signal 3', 'Signal 4', 'Signal 5',
+            'Signal 6', 'Signal 7', 'Signal 8', 'Signal 9', 'Signal 10']
+        widths = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+        colors = ['blue', 'red', 'green', 'black', 'cyan',
+            'magenta', 'yellow', 'dark red', 'dark green', 'dark blue']
+        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0, 1.0]
+        styles = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+        markers = [-1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1]
+
+
+        for i in range(2):
+            if len(labels[i]) == 0:
+                if (i % 2 == 0):
+                    self.qtgui_time_sink_x_1.set_line_label(i, "Re{{Data {0}}}".format(i/2))
+                else:
+                    self.qtgui_time_sink_x_1.set_line_label(i, "Im{{Data {0}}}".format(i/2))
+            else:
+                self.qtgui_time_sink_x_1.set_line_label(i, labels[i])
+            self.qtgui_time_sink_x_1.set_line_width(i, widths[i])
+            self.qtgui_time_sink_x_1.set_line_color(i, colors[i])
+            self.qtgui_time_sink_x_1.set_line_style(i, styles[i])
+            self.qtgui_time_sink_x_1.set_line_marker(i, markers[i])
+            self.qtgui_time_sink_x_1.set_line_alpha(i, alphas[i])
+
+        self._qtgui_time_sink_x_1_win = sip.wrapinstance(self.qtgui_time_sink_x_1.pyqwidget(), Qt.QWidget)
+        self.top_grid_layout.addWidget(self._qtgui_time_sink_x_1_win)
+        self.qtgui_time_sink_x_0 = qtgui.time_sink_c(
+            1024, #size
+            samp_rate / 120 / 16 / 16, #samp_rate
+            "", #name
+            1 #number of inputs
         )
-        self._gain_slider = forms.slider(
-        	parent=self.GetWin(),
-        	sizer=_gain_sizer,
-        	value=self.gain,
-        	callback=self.set_gain,
-        	minimum=0,
-        	maximum=49.6,
-        	num_steps=124,
-        	style=wx.SL_HORIZONTAL,
-        	cast=float,
-        	proportion=1,
+        self.qtgui_time_sink_x_0.set_update_time(0.10)
+        self.qtgui_time_sink_x_0.set_y_axis(-1, 1)
+
+        self.qtgui_time_sink_x_0.set_y_label('Amplitude', "")
+
+        self.qtgui_time_sink_x_0.enable_tags(True)
+        self.qtgui_time_sink_x_0.set_trigger_mode(qtgui.TRIG_MODE_FREE, qtgui.TRIG_SLOPE_POS, 0.0, 0, 0, "")
+        self.qtgui_time_sink_x_0.enable_autoscale(False)
+        self.qtgui_time_sink_x_0.enable_grid(False)
+        self.qtgui_time_sink_x_0.enable_axis_labels(True)
+        self.qtgui_time_sink_x_0.enable_control_panel(False)
+        self.qtgui_time_sink_x_0.enable_stem_plot(False)
+
+
+        labels = ['Signal 1', 'Signal 2', 'Signal 3', 'Signal 4', 'Signal 5',
+            'Signal 6', 'Signal 7', 'Signal 8', 'Signal 9', 'Signal 10']
+        widths = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+        colors = ['blue', 'red', 'green', 'black', 'cyan',
+            'magenta', 'yellow', 'dark red', 'dark green', 'dark blue']
+        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0, 1.0]
+        styles = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+        markers = [-1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1]
+
+
+        for i in range(2):
+            if len(labels[i]) == 0:
+                if (i % 2 == 0):
+                    self.qtgui_time_sink_x_0.set_line_label(i, "Re{{Data {0}}}".format(i/2))
+                else:
+                    self.qtgui_time_sink_x_0.set_line_label(i, "Im{{Data {0}}}".format(i/2))
+            else:
+                self.qtgui_time_sink_x_0.set_line_label(i, labels[i])
+            self.qtgui_time_sink_x_0.set_line_width(i, widths[i])
+            self.qtgui_time_sink_x_0.set_line_color(i, colors[i])
+            self.qtgui_time_sink_x_0.set_line_style(i, styles[i])
+            self.qtgui_time_sink_x_0.set_line_marker(i, markers[i])
+            self.qtgui_time_sink_x_0.set_line_alpha(i, alphas[i])
+
+        self._qtgui_time_sink_x_0_win = sip.wrapinstance(self.qtgui_time_sink_x_0.pyqwidget(), Qt.QWidget)
+        self.top_grid_layout.addWidget(self._qtgui_time_sink_x_0_win)
+        self.qtgui_number_sink_0 = qtgui.number_sink(
+            gr.sizeof_float,
+            0,
+            qtgui.NUM_GRAPH_HORIZ,
+            1
         )
-        self.GridAdd(_gain_sizer, 2, 0, 1, 1)
-        _corr_sizer = wx.BoxSizer(wx.VERTICAL)
-        self._corr_text_box = forms.text_box(
-        	parent=self.GetWin(),
-        	sizer=_corr_sizer,
-        	value=self.corr,
-        	callback=self.set_corr,
-        	label='corr',
-        	converter=forms.float_converter(),
-        	proportion=0,
+        self.qtgui_number_sink_0.set_update_time(0.10)
+        self.qtgui_number_sink_0.set_title("")
+
+        labels = ['', '', '', '', '',
+            '', '', '', '', '']
+        units = ['', '', '', '', '',
+            '', '', '', '', '']
+        colors = [("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"),
+            ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black")]
+        factor = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+
+        for i in range(1):
+            self.qtgui_number_sink_0.set_min(i, -1)
+            self.qtgui_number_sink_0.set_max(i, 1)
+            self.qtgui_number_sink_0.set_color(i, colors[i][0], colors[i][1])
+            if len(labels[i]) == 0:
+                self.qtgui_number_sink_0.set_label(i, "Data {0}".format(i))
+            else:
+                self.qtgui_number_sink_0.set_label(i, labels[i])
+            self.qtgui_number_sink_0.set_unit(i, units[i])
+            self.qtgui_number_sink_0.set_factor(i, factor[i])
+
+        self.qtgui_number_sink_0.enable_autoscale(False)
+        self._qtgui_number_sink_0_win = sip.wrapinstance(self.qtgui_number_sink_0.pyqwidget(), Qt.QWidget)
+        self.top_grid_layout.addWidget(self._qtgui_number_sink_0_win)
+        self.osmosdr_source_0 = osmosdr.source(
+            args="numchan=" + str(1) + " " + ''
         )
-        self._corr_slider = forms.slider(
-        	parent=self.GetWin(),
-        	sizer=_corr_sizer,
-        	value=self.corr,
-        	callback=self.set_corr,
-        	minimum=-150,
-        	maximum=150,
-        	num_steps=300,
-        	style=wx.SL_HORIZONTAL,
-        	cast=float,
-        	proportion=1,
-        )
-        self.GridAdd(_corr_sizer, 2, 1, 1, 1)
-        self.wxgui_waterfallsink2_2 = waterfallsink2.waterfall_sink_f(
-        	self.nb.GetPage(2).GetWin(),
-        	baseband_freq=0,
-        	dynamic_range=30,
-        	ref_level=-40,
-        	ref_scale=2.0,
-        	sample_rate=audio_rate,
-        	fft_size=512,
-        	fft_rate=15,
-        	average=False,
-        	avg_alpha=None,
-        	title="Waterfall Plot",
-        	win=window.blackmanharris,
-        	size=((800,400)),
-        )
-        self.nb.GetPage(2).Add(self.wxgui_waterfallsink2_2.win)
-        def wxgui_waterfallsink2_2_callback(x, y):
-        	self.set_psk_offset(x)
-        
-        self.wxgui_waterfallsink2_2.set_callback(wxgui_waterfallsink2_2_callback)
-        self.wxgui_waterfallsink2_1 = waterfallsink2.waterfall_sink_c(
-        	self.nb.GetPage(1).GetWin(),
-        	baseband_freq=psk_center,
-        	dynamic_range=30,
-        	ref_level=-30,
-        	ref_scale=2.0,
-        	sample_rate=int_rate,
-        	fft_size=2048,
-        	fft_rate=15,
-        	average=False,
-        	avg_alpha=None,
-        	title="Waterfall Plot",
-        	size=((800,400)),
-        )
-        self.nb.GetPage(1).Add(self.wxgui_waterfallsink2_1.win)
-        self.wxgui_waterfallsink2_0 = waterfallsink2.waterfall_sink_c(
-        	self.nb.GetPage(0).GetWin(),
-        	baseband_freq=center_freq,
-        	dynamic_range=30,
-        	ref_level=-20,
-        	ref_scale=2.0,
-        	sample_rate=samp_rate,
-        	fft_size=2048,
-        	fft_rate=15,
-        	average=False,
-        	avg_alpha=None,
-        	title="Waterfall Plot",
-        	size=((800,400)),
-        )
-        self.nb.GetPage(0).Add(self.wxgui_waterfallsink2_0.win)
-        def wxgui_waterfallsink2_0_callback(x, y):
-        	self.set_psk_center(x)
-        
-        self.wxgui_waterfallsink2_0.set_callback(wxgui_waterfallsink2_0_callback)
-        self.wxgui_termsink_0 = termsink.termsink(
-        	parent=self.GetWin(),
-        	size=(500,100),
-        	msgq=wxgui_termsink_0_msgq_in,
-        )
-        self.Add(self.wxgui_termsink_0)
-        self.wxgui_scopesink2_1 = scopesink2.scope_sink_c(
-        	self.nb.GetPage(4).GetWin(),
-        	title="Scope Plot",
-        	sample_rate=31.25,
-        	v_scale=0.4,
-        	v_offset=0,
-        	t_scale=0,
-        	ac_couple=False,
-        	xy_mode=True,
-        	num_inputs=1,
-        	trig_mode=wxgui.TRIG_MODE_AUTO,
-        	y_axis_label="Counts",
-        )
-        self.nb.GetPage(4).Add(self.wxgui_scopesink2_1.win)
-        self.wxgui_scopesink2_0 = scopesink2.scope_sink_c(
-        	self.nb.GetPage(3).GetWin(),
-        	title="Scope Plot",
-        	sample_rate=500,
-        	v_scale=0.4,
-        	v_offset=0,
-        	t_scale=0,
-        	ac_couple=False,
-        	xy_mode=True,
-        	num_inputs=1,
-        	trig_mode=wxgui.TRIG_MODE_AUTO,
-        	y_axis_label="Counts",
-        )
-        self.nb.GetPage(3).Add(self.wxgui_scopesink2_0.win)
-        self.wxgui_numbersink2_0 = numbersink2.number_sink_f(
-        	self.GetWin(),
-        	unit="Hz",
-        	minval=-500 / math.pi,
-        	maxval=500 / math.pi,
-        	factor=500 / math.pi,
-        	decimal_places=1,
-        	ref_level=0,
-        	sample_rate=500,
-        	number_rate=15,
-        	average=False,
-        	avg_alpha=None,
-        	label="Carrier tracking offset",
-        	peak_hold=False,
-        	show_gauge=True,
-        )
-        self.Add(self.wxgui_numbersink2_0.win)
-        self.osmosdr_source_0 = osmosdr.source( args="numchan=" + str(1) + " " + "" )
+        self.osmosdr_source_0.set_time_unknown_pps(osmosdr.time_spec_t())
         self.osmosdr_source_0.set_sample_rate(samp_rate)
         self.osmosdr_source_0.set_center_freq(center_freq, 0)
-        self.osmosdr_source_0.set_freq_corr(corr, 0)
-        self.osmosdr_source_0.set_dc_offset_mode(0, 0)
-        self.osmosdr_source_0.set_iq_balance_mode(0, 0)
-        self.osmosdr_source_0.set_gain_mode(0, 0)
+        self.osmosdr_source_0.set_freq_corr(0, 0)
         self.osmosdr_source_0.set_gain(gain, 0)
         self.osmosdr_source_0.set_if_gain(20, 0)
         self.osmosdr_source_0.set_bb_gain(20, 0)
-        self.osmosdr_source_0.set_antenna("", 0)
+        self.osmosdr_source_0.set_antenna('', 0)
         self.osmosdr_source_0.set_bandwidth(0, 0)
-          
         self.ham_varicode_rx_0 = ham.varicode_rx()
-        self.freq_xlating_fir_filter_xxx_1 = filter.freq_xlating_fir_filter_ccc(16, (firdes.low_pass(10, audio_rate, 120, 40, firdes.WIN_HAMMING, 6.76)), psk_offset, audio_rate)
-        self.freq_xlating_fir_filter_xxx_0 = filter.freq_xlating_fir_filter_ccc(samp_rate / int_rate, (firdes.low_pass(1, samp_rate, 12000, 12000, firdes.WIN_HAMMING, 6.76)), round(psk_center - center_freq,-3), samp_rate)
+        self.freq_xlating_fir_filter_xxx_1 = filter.freq_xlating_fir_filter_ccc(16, firdes.low_pass(10, audio_rate, 120, 40, firdes.WIN_HAMMING, 6.76), psk_offset, audio_rate)
+        self.freq_xlating_fir_filter_xxx_0 = filter.freq_xlating_fir_filter_ccc(samp_rate // int_rate, firdes.low_pass(1, samp_rate, 12000, 12000, firdes.WIN_HAMMING, 6.76), round(psk_center - center_freq,-3), samp_rate)
         self.digital_diff_phasor_cc_0 = digital.diff_phasor_cc()
-        self.digital_costas_loop_cc_0 = digital.costas_loop_cc(5 * math.pi /100.0, 2)
+        self.digital_costas_loop_cc_0 = digital.costas_loop_cc(5 * math.pi /100.0, 2, False)
         self.digital_clock_recovery_mm_xx_0 = digital.clock_recovery_mm_cc(16, 0.25*0.175*0.175, 0.5, 0.175, 0.005)
         self.digital_binary_slicer_fb_0 = digital.binary_slicer_fb()
-        self.blocks_message_sink_0 = blocks.message_sink(gr.sizeof_char*1, blocks_message_sink_0_msgq_out, True)
+        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_char*1, 'psk31.txt', False)
+        self.blocks_file_sink_0.set_unbuffered(True)
         self.blocks_complex_to_real_1 = blocks.complex_to_real(1)
         self.blocks_complex_to_real_0 = blocks.complex_to_real(1)
-        self.band_pass_filter_0 = filter.fir_filter_ccc(int_rate / audio_rate, firdes.complex_band_pass(
-        	1, int_rate, 200, 2800, 200, firdes.WIN_HAMMING, 6.76))
-        self.audio_sink_0 = audio.sink(audio_rate, "plughw:0,0", True)
+        self.band_pass_filter_0 = filter.fir_filter_ccc(
+            int_rate // audio_rate,
+            firdes.complex_band_pass(
+                1,
+                int_rate,
+                200,
+                2800,
+                200,
+                firdes.WIN_HAMMING,
+                6.76))
+        self.audio_sink_0 = audio.sink(audio_rate, 'plughw:0,0', True)
         self.analog_agc_xx_0 = analog.agc_cc(1e-3, 0.1, 1.0)
         self.analog_agc_xx_0.set_max_gain(65536)
+
+
 
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.wxgui_waterfallsink2_1, 0))
-        self.connect((self.osmosdr_source_0, 0), (self.wxgui_waterfallsink2_0, 0))
-        self.connect((self.osmosdr_source_0, 0), (self.freq_xlating_fir_filter_xxx_0, 0))
-        self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.band_pass_filter_0, 0))
-        self.connect((self.blocks_complex_to_real_0, 0), (self.wxgui_waterfallsink2_2, 0))
-        self.connect((self.digital_costas_loop_cc_0, 1), (self.wxgui_numbersink2_0, 0))
-        self.connect((self.freq_xlating_fir_filter_xxx_1, 0), (self.digital_costas_loop_cc_0, 0))
-        self.connect((self.digital_costas_loop_cc_0, 0), (self.wxgui_scopesink2_0, 0))
-        self.connect((self.digital_clock_recovery_mm_xx_0, 0), (self.digital_diff_phasor_cc_0, 0))
-        self.connect((self.digital_costas_loop_cc_0, 0), (self.digital_clock_recovery_mm_xx_0, 0))
-        self.connect((self.ham_varicode_rx_0, 0), (self.blocks_message_sink_0, 0))
-        self.connect((self.digital_binary_slicer_fb_0, 0), (self.ham_varicode_rx_0, 0))
-        self.connect((self.blocks_complex_to_real_1, 0), (self.digital_binary_slicer_fb_0, 0))
-        self.connect((self.digital_diff_phasor_cc_0, 0), (self.blocks_complex_to_real_1, 0))
-        self.connect((self.blocks_complex_to_real_0, 0), (self.audio_sink_0, 0))
-        self.connect((self.band_pass_filter_0, 0), (self.analog_agc_xx_0, 0))
         self.connect((self.analog_agc_xx_0, 0), (self.blocks_complex_to_real_0, 0))
         self.connect((self.analog_agc_xx_0, 0), (self.freq_xlating_fir_filter_xxx_1, 0))
-        self.connect((self.digital_clock_recovery_mm_xx_0, 0), (self.wxgui_scopesink2_1, 0))
+        self.connect((self.band_pass_filter_0, 0), (self.analog_agc_xx_0, 0))
+        self.connect((self.blocks_complex_to_real_0, 0), (self.audio_sink_0, 0))
+        self.connect((self.blocks_complex_to_real_0, 0), (self.qtgui_waterfall_sink_x_2, 0))
+        self.connect((self.blocks_complex_to_real_1, 0), (self.digital_binary_slicer_fb_0, 0))
+        self.connect((self.digital_binary_slicer_fb_0, 0), (self.ham_varicode_rx_0, 0))
+        self.connect((self.digital_clock_recovery_mm_xx_0, 0), (self.digital_diff_phasor_cc_0, 0))
+        self.connect((self.digital_clock_recovery_mm_xx_0, 0), (self.qtgui_time_sink_x_0, 0))
+        self.connect((self.digital_costas_loop_cc_0, 0), (self.digital_clock_recovery_mm_xx_0, 0))
+        self.connect((self.digital_costas_loop_cc_0, 1), (self.qtgui_number_sink_0, 0))
+        self.connect((self.digital_costas_loop_cc_0, 0), (self.qtgui_time_sink_x_1, 0))
+        self.connect((self.digital_diff_phasor_cc_0, 0), (self.blocks_complex_to_real_1, 0))
+        self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.band_pass_filter_0, 0))
+        self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.qtgui_waterfall_sink_x_1, 0))
+        self.connect((self.freq_xlating_fir_filter_xxx_1, 0), (self.digital_costas_loop_cc_0, 0))
+        self.connect((self.ham_varicode_rx_0, 0), (self.blocks_file_sink_0, 0))
+        self.connect((self.osmosdr_source_0, 0), (self.freq_xlating_fir_filter_xxx_0, 0))
+        self.connect((self.osmosdr_source_0, 0), (self.qtgui_waterfall_sink_x_0, 0))
 
 
-# QT sink close method reimplementation
+    def closeEvent(self, event):
+        self.settings = Qt.QSettings("GNU Radio", "psk31_rx")
+        self.settings.setValue("geometry", self.saveGeometry())
+        event.accept()
 
     def get_center_freq(self):
         return self.center_freq
 
     def set_center_freq(self, center_freq):
         self.center_freq = center_freq
-        self.osmosdr_source_0.set_center_freq(self.center_freq, 0)
-        self.wxgui_waterfallsink2_0.set_baseband_freq(self.center_freq)
-        self.freq_xlating_fir_filter_xxx_0.set_center_freq(round(self.psk_center - self.center_freq,-3))
         self.set_psk_center(self.center_freq + 141000)
+        self.freq_xlating_fir_filter_xxx_0.set_center_freq(round(self.psk_center - self.center_freq,-3))
+        self.osmosdr_source_0.set_center_freq(self.center_freq, 0)
+        self.qtgui_waterfall_sink_x_0.set_frequency_range(self.center_freq, self.samp_rate)
 
     def get_samp_rate(self):
         return self.samp_rate
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
+        self.freq_xlating_fir_filter_xxx_0.set_taps(firdes.low_pass(1, self.samp_rate, 12000, 12000, firdes.WIN_HAMMING, 6.76))
         self.osmosdr_source_0.set_sample_rate(self.samp_rate)
-        self.wxgui_waterfallsink2_0.set_sample_rate(self.samp_rate)
-        self.freq_xlating_fir_filter_xxx_0.set_taps((firdes.low_pass(1, self.samp_rate, 12000, 12000, firdes.WIN_HAMMING, 6.76)))
+        self.qtgui_time_sink_x_0.set_samp_rate(self.samp_rate / 120 / 16 / 16)
+        self.qtgui_time_sink_x_1.set_samp_rate(self.samp_rate / 120)
+        self.qtgui_waterfall_sink_x_0.set_frequency_range(self.center_freq, self.samp_rate)
+        self.qtgui_waterfall_sink_x_1.set_frequency_range(0, self.samp_rate / 20)
+        self.qtgui_waterfall_sink_x_2.set_frequency_range(0, self.samp_rate / 120)
 
     def get_psk_offset(self):
         return self.psk_offset
@@ -339,8 +428,6 @@ class psk31_rx(grc_wxgui.top_block_gui):
     def set_psk_offset(self, psk_offset):
         self.psk_offset = psk_offset
         self.freq_xlating_fir_filter_xxx_1.set_center_freq(self.psk_offset)
-        self._psk_offset_slider.set_value(self.psk_offset)
-        self._psk_offset_text_box.set_value(self.psk_offset)
 
     def get_psk_center(self):
         return self.psk_center
@@ -348,16 +435,12 @@ class psk31_rx(grc_wxgui.top_block_gui):
     def set_psk_center(self, psk_center):
         self.psk_center = psk_center
         self.freq_xlating_fir_filter_xxx_0.set_center_freq(round(self.psk_center - self.center_freq,-3))
-        self.wxgui_waterfallsink2_1.set_baseband_freq(self.psk_center)
-        self._psk_center_slider.set_value(self.psk_center)
-        self._psk_center_text_box.set_value(self.psk_center)
 
     def get_int_rate(self):
         return self.int_rate
 
     def set_int_rate(self, int_rate):
         self.int_rate = int_rate
-        self.wxgui_waterfallsink2_1.set_sample_rate(self.int_rate)
         self.band_pass_filter_0.set_taps(firdes.complex_band_pass(1, self.int_rate, 200, 2800, 200, firdes.WIN_HAMMING, 6.76))
 
     def get_gain(self):
@@ -366,38 +449,47 @@ class psk31_rx(grc_wxgui.top_block_gui):
     def set_gain(self, gain):
         self.gain = gain
         self.osmosdr_source_0.set_gain(self.gain, 0)
-        self._gain_slider.set_value(self.gain)
-        self._gain_text_box.set_value(self.gain)
-
-    def get_corr(self):
-        return self.corr
-
-    def set_corr(self, corr):
-        self.corr = corr
-        self._corr_slider.set_value(self.corr)
-        self._corr_text_box.set_value(self.corr)
-        self.osmosdr_source_0.set_freq_corr(self.corr, 0)
 
     def get_audio_rate(self):
         return self.audio_rate
 
     def set_audio_rate(self, audio_rate):
         self.audio_rate = audio_rate
-        self.wxgui_waterfallsink2_2.set_sample_rate(self.audio_rate)
-        self.freq_xlating_fir_filter_xxx_1.set_taps((firdes.low_pass(10, self.audio_rate, 120, 40, firdes.WIN_HAMMING, 6.76)))
+        self.freq_xlating_fir_filter_xxx_1.set_taps(firdes.low_pass(10, self.audio_rate, 120, 40, firdes.WIN_HAMMING, 6.76))
+
+
+
+
+
+def main(top_block_cls=psk31_rx, options=None):
+
+    if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
+        style = gr.prefs().get_string('qtgui', 'style', 'raster')
+        Qt.QApplication.setGraphicsSystem(style)
+    qapp = Qt.QApplication(sys.argv)
+
+    tb = top_block_cls()
+
+    tb.start()
+
+    tb.show()
+
+    def sig_handler(sig=None, frame=None):
+        Qt.QApplication.quit()
+
+    signal.signal(signal.SIGINT, sig_handler)
+    signal.signal(signal.SIGTERM, sig_handler)
+
+    timer = Qt.QTimer()
+    timer.start(500)
+    timer.timeout.connect(lambda: None)
+
+    def quitting():
+        tb.stop()
+        tb.wait()
+
+    qapp.aboutToQuit.connect(quitting)
+    qapp.exec_()
 
 if __name__ == '__main__':
-    import ctypes
-    import os
-    if os.name == 'posix':
-        try:
-            x11 = ctypes.cdll.LoadLibrary('libX11.so')
-            x11.XInitThreads()
-        except:
-            print "Warning: failed to XInitThreads()"
-    parser = OptionParser(option_class=eng_option, usage="%prog: [options]")
-    (options, args) = parser.parse_args()
-    tb = psk31_rx()
-    tb.Start(True)
-    tb.Wait()
-
+    main()

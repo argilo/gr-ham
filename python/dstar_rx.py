@@ -1,27 +1,30 @@
 #!/usr/bin/env python
-# 
-# Copyright 2014 Clayton Smith.
-# 
+# -*- coding: utf-8 -*-
+#
+# Copyright 2014,2020 Clayton Smith.
+#
 # This is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3, or (at your option)
 # any later version.
-# 
+#
 # This software is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this software; see the file COPYING.  If not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
-# 
+#
 
+
+from __future__ import print_function
 import numpy
 from gnuradio import gr
 
-class dstar_rx(gr.basic_block):
+class dstar_rx(gr.sync_block):
     """
     docstring for block dstar_rx
     """
@@ -48,12 +51,12 @@ class dstar_rx(gr.basic_block):
     current_state = STATE_IDLE
 
     def __init__(self):
-        gr.basic_block.__init__(self,
+        gr.sync_block.__init__(self,
             name="dstar_rx",
             in_sig=[numpy.int8],
-            out_sig=[numpy.float32])
+            out_sig=None)
         self.f = open("dstar-audio.dst", "wb")
-        self.f.write(".dst")
+        self.f.write(".dst".encode())
 
     def unscramble(self, header):
         state = 0b1111111 # Initial state
@@ -76,7 +79,7 @@ class dstar_rx(gr.basic_block):
 
     def viterbi_header(self, header):
         # TODO: Implement proper Viterbi decode.
-        out_header = numpy.array([0]*(len(header)/2 - 2), dtype=numpy.int8)
+        out_header = numpy.array([0]*(len(header)//2 - 2), dtype=numpy.int8)
         prev = 0
         prev_prev = 0
         for x in range(len(out_header)):
@@ -94,12 +97,12 @@ class dstar_rx(gr.basic_block):
         for x in range(0, len(header), 8):
             bits = header[x:x+8]
             header_bytes += chr(int(bits, 2))
-        print "Destination repeater callsign: " + header_bytes[3:11]
-        print "Departure repeater callsign: " + header_bytes[11:19]
-        print "Companion callsign: " + header_bytes[19:27]
-        print "Own callsign 1: " + header_bytes[27:35]
-        print "Own callsign 2: " + header_bytes[35:39]
-        print "CRC: " + header[-16:]
+        print("Destination repeater callsign: " + header_bytes[3:11])
+        print("Departure repeater callsign: " + header_bytes[11:19])
+        print("Companion callsign: " + header_bytes[19:27])
+        print("Own callsign 1: " + header_bytes[27:35])
+        print("Own callsign 2: " + header_bytes[35:39])
+        print("CRC: " + header[-16:])
 
     def prng(self, i):
         mask = 0x800000
@@ -127,12 +130,7 @@ class dstar_rx(gr.basic_block):
         # TODO: Implement proper Golay
         return bits[0:12]
 
-    def forecast(self, noutput_items, ninput_items_required):
-        #setup size of input_items[i] for work call
-        for i in range(len(ninput_items_required)):
-            ninput_items_required[i] = noutput_items * self.INPUT_RATE / self.OUTPUT_RATE
-
-    def general_work(self, input_items, output_items):
+    def work(self, input_items, output_items):
         in0 = input_items[0]
 
         if self.current_state == self.STATE_IDLE:
@@ -165,7 +163,7 @@ class dstar_rx(gr.basic_block):
             second_code_word = int(bits[24:48], 2) ^ self.prng(first_word)
 
             voice_bits = self.golay(bits[0:24]) + self.golay('{0:024b}'.format(second_code_word)) + bits[48:72]
-            self.f.write(chr(int(voice_bits[0:8], 2)) + chr(int(voice_bits[8:16], 2)) + chr(int(voice_bits[16:24], 2)) + chr(int(voice_bits[24:32], 2)) + chr(int(voice_bits[32:40], 2)) + chr(int(voice_bits[40:48], 2)))
+            self.f.write(bytes([int(voice_bits[0:8], 2), int(voice_bits[8:16], 2), int(voice_bits[16:24], 2), int(voice_bits[24:32], 2), int(voice_bits[32:40], 2), int(voice_bits[40:48], 2)]))
             self.f.flush()
             data_bits = self.reverse_bytes(self.unscramble(in0[72:96]).tostring().replace('\x00','0').replace('\x01','1'))
 
@@ -179,13 +177,13 @@ class dstar_rx(gr.basic_block):
             else:
                 fund_freq_text = '{0:03}'.format(fund_freq)
 
-            print voice_bits + " " + data_bits + " " + fund_freq_text
+            print(voice_bits + " " + data_bits + " " + fund_freq_text)
 
             # Check whether we've reached the end of a transmission:
             if bits[self.VOICE_FRAME_LEN:] == self.data_term:
                 self.consume(0, self.VOICE_FRAME_LEN + len(self.data_term))
                 self.current_state = self.STATE_IDLE
-                print "End of transmission."
-            else: 
+                print("End of transmission.")
+            else:
                 self.consume(0, self.TOTAL_FRAME_LEN)
             return 160

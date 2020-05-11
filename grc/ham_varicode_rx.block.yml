@@ -1,0 +1,17 @@
+id: ham_varicode_rx
+label: Varicode Decoder
+category: '[Ham]'
+
+templates:
+  imports: import ham
+  make: ham.varicode_rx()
+
+inputs:
+- label: in
+  dtype: byte
+
+outputs:
+- label: out
+  dtype: byte
+
+file_format: 1

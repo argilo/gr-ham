@@ -1,25 +1,26 @@
 #!/usr/bin/env python
-# 
-# Copyright 2014 Clayton Smith.
-# 
+# -*- coding: utf-8 -*-
+#
+# Copyright 2014,2020 Clayton Smith.
+#
 # This is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3, or (at your option)
 # any later version.
-# 
+#
 # This software is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this software; see the file COPYING.  If not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
-# 
+#
+
 
 import numpy
-import sys
 from gnuradio import gr
 
 encode = {
@@ -118,6 +119,6 @@ class varicode_tx(gr.basic_block):
         else:
             num_consumed = 1
 
-#        print c, num_consumed, num_produced, len(out0)
+#        print(c, num_consumed, num_produced, len(out0))
         self.consume(0, num_consumed)
         return num_produced

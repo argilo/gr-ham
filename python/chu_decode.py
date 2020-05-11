@@ -1,45 +1,46 @@
 #!/usr/bin/env python
-# 
-# Copyright 2014 Clayton Smith.
-# 
+# -*- coding: utf-8 -*-
+#
+# Copyright 2014,2020 Clayton Smith.
+#
 # This is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3, or (at your option)
 # any later version.
-# 
+#
 # This software is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this software; see the file COPYING.  If not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
-# 
+#
 
+
+from __future__ import division
+from __future__ import print_function
 import numpy
 from gnuradio import gr
 
-class chu_decode(gr.basic_block):
+class chu_decode(gr.sync_block):
     """
     docstring for block chu_decode
     """
 
     start_of_data = numpy.array([1] * 533 + [0], dtype=numpy.int8).tostring() # Preamble
-    samples_per_bit = 4800 / 300 # Sample rate / baud rate
+    samples_per_bit = 4800 // 300 # Sample rate / baud rate
     samples_in_message = 110 * samples_per_bit
 
     def __init__(self):
-        gr.basic_block.__init__(self,
+        gr.sync_block.__init__(self,
             name="chu_decode",
             in_sig=[numpy.int8],
             out_sig=None)
 
-    def forecast(self, noutput_items, ninput_items_required):
-        ninput_items_required[0] = (len(self.start_of_data) + self.samples_in_message) + 480
-
-    def general_work(self, input_items, output_items):
+    def work(self, input_items, output_items):
         in0 = input_items[0]
 
         # Wait until we have enough data for a whole packet
@@ -61,7 +62,7 @@ class chu_decode(gr.basic_block):
                     databits += '1'
                 else:
                     databits += '0'
-         
+
             # Decode bytes
             tenbytes = []
             for x in range(0,110,11):
@@ -78,7 +79,7 @@ class chu_decode(gr.basic_block):
                             byteord += 1
                     tenbytes.append(byteord)
                 else:
-                    print 'error',
+                    print('error', end=" ")
                     tenbytes.append(-1)
 
             # Decode data
@@ -87,10 +88,10 @@ class chu_decode(gr.basic_block):
                 hour = (tenbytes[2] >> 4) * 10 + (tenbytes[2] & 0x0f)
                 minute = (tenbytes[3] >> 4) * 10 + (tenbytes[3] & 0x0f)
                 second = (tenbytes[4] >> 4) * 10 + (tenbytes[4] & 0x0f)
-                print "A frame:"
-                print " Day of year: " + str(day)
-                print " Current Time: " + str(hour) + ":" + str(minute) + ":" + str(second) + " UTC"
-                print
+                print("A frame:")
+                print(" Day of year: " + str(day))
+                print(" Current Time: " + str(hour) + ":" + str(minute) + ":" + str(second) + " UTC")
+                print()
             elif tenbytes[0:5] == [x ^ 0xff for x in tenbytes[5:10]]:
                 dut = (tenbytes[0] & 0x0f) / 10.0
                 if (tenbytes[0] & 0x10):
@@ -103,20 +104,18 @@ class chu_decode(gr.basic_block):
                 year = (tenbytes[1] >> 4) * 1000 + (tenbytes[1] & 0x0f) * 100 + (tenbytes[2] >> 4) * 10 + (tenbytes[2] & 0x0f)
                 tt = (tenbytes[3] >> 4) * 10 + (tenbytes[3] & 0x0f)
                 aa = (tenbytes[4] >> 4) * 10 + (tenbytes[4] & 0x0f)
-                print "B frame:"
-                print " Year: " + str(year) 
-                print " Leap second warning: " + str(lsw)
-                print " Difference between UTC and UT1: " + str(dut) + " seconds"
-                print " Difference between TAI and UTC: " + str(tt) + " seconds"
-                print " Daylight saving time pattern: " + str(aa)
-                print
+                print("B frame:")
+                print(" Year: " + str(year))
+                print(" Leap second warning: " + str(lsw))
+                print(" Difference between UTC and UT1: " + str(dut) + " seconds")
+                print(" Difference between TAI and UTC: " + str(tt) + " seconds")
+                print(" Daylight saving time pattern: " + str(aa))
+                print()
             else:
-                print "Decoding error."
-                print            
-    
-            self.consume_each(index + len(self.start_of_data) + self.samples_in_message)
-            return 0
+                print("Decoding error.")
+                print()
+
+            return index + len(self.start_of_data) + self.samples_in_message
 
         # We didn't find a preamble
-        self.consume_each(len(in0) - len(self.start_of_data) - self.samples_in_message)
-        return 0
+        return len(in0) - len(self.start_of_data) - self.samples_in_message

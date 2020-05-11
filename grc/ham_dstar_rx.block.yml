@@ -1,0 +1,13 @@
+id: ham_dstar_rx
+label: D-STAR Decoder
+category: '[Ham]'
+
+templates:
+  imports: import ham
+  make: ham.dstar_rx()
+
+inputs:
+- label: in
+  dtype: byte
+
+file_format: 1

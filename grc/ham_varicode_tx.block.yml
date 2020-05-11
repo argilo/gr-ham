@@ -1,0 +1,17 @@
+id: ham_varicode_tx
+label: Varicode Encoder
+category: '[Ham]'
+
+templates:
+  imports: import ham
+  make: ham.varicode_tx()
+
+inputs:
+- label: in
+  dtype: byte
+
+outputs:
+- label: out
+  dtype: byte
+
+file_format: 1
