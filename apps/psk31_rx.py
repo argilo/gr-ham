@@ -30,6 +30,7 @@ from gnuradio import blocks
 from gnuradio import digital
 from gnuradio import filter
 from gnuradio import gr
+from gnuradio.fft import window
 import sys
 import signal
 from argparse import ArgumentParser
@@ -101,7 +102,7 @@ class psk31_rx(gr.top_block, Qt.QWidget):
         self.top_grid_layout.addWidget(self._gain_win)
         self.qtgui_waterfall_sink_x_2 = qtgui.waterfall_sink_f(
             1024, #size
-            firdes.WIN_BLACKMAN_hARRIS, #wintype
+            window.WIN_BLACKMAN_hARRIS, #wintype
             0, #fc
             samp_rate / 120, #bw
             "", #name
@@ -135,7 +136,7 @@ class psk31_rx(gr.top_block, Qt.QWidget):
         self.top_grid_layout.addWidget(self._qtgui_waterfall_sink_x_2_win)
         self.qtgui_waterfall_sink_x_1 = qtgui.waterfall_sink_c(
             1024, #size
-            firdes.WIN_BLACKMAN_hARRIS, #wintype
+            window.WIN_BLACKMAN_hARRIS, #wintype
             0, #fc
             samp_rate / 20, #bw
             "", #name
@@ -168,7 +169,7 @@ class psk31_rx(gr.top_block, Qt.QWidget):
         self.top_grid_layout.addWidget(self._qtgui_waterfall_sink_x_1_win)
         self.qtgui_waterfall_sink_x_0 = qtgui.waterfall_sink_c(
             1024, #size
-            firdes.WIN_BLACKMAN_hARRIS, #wintype
+            window.WIN_BLACKMAN_hARRIS, #wintype
             center_freq, #fc
             samp_rate, #bw
             "", #name
@@ -344,8 +345,8 @@ class psk31_rx(gr.top_block, Qt.QWidget):
         self.osmosdr_source_0.set_antenna('', 0)
         self.osmosdr_source_0.set_bandwidth(0, 0)
         self.ham_varicode_rx_0 = ham.varicode_rx()
-        self.freq_xlating_fir_filter_xxx_1 = filter.freq_xlating_fir_filter_ccc(16, firdes.low_pass(10, audio_rate, 120, 40, firdes.WIN_HAMMING, 6.76), psk_offset, audio_rate)
-        self.freq_xlating_fir_filter_xxx_0 = filter.freq_xlating_fir_filter_ccc(samp_rate // int_rate, firdes.low_pass(1, samp_rate, 12000, 12000, firdes.WIN_HAMMING, 6.76), round(psk_center - center_freq,-3), samp_rate)
+        self.freq_xlating_fir_filter_xxx_1 = filter.freq_xlating_fir_filter_ccc(16, firdes.low_pass(10, audio_rate, 120, 40, window.WIN_HAMMING, 6.76), psk_offset, audio_rate)
+        self.freq_xlating_fir_filter_xxx_0 = filter.freq_xlating_fir_filter_ccc(samp_rate // int_rate, firdes.low_pass(1, samp_rate, 12000, 12000, window.WIN_HAMMING, 6.76), round(psk_center - center_freq,-3), samp_rate)
         self.digital_diff_phasor_cc_0 = digital.diff_phasor_cc()
         self.digital_costas_loop_cc_0 = digital.costas_loop_cc(5 * math.pi /100.0, 2, False)
         self.digital_clock_recovery_mm_xx_0 = digital.clock_recovery_mm_cc(16, 0.25*0.175*0.175, 0.5, 0.175, 0.005)
@@ -362,7 +363,7 @@ class psk31_rx(gr.top_block, Qt.QWidget):
                 200,
                 2800,
                 200,
-                firdes.WIN_HAMMING,
+                window.WIN_HAMMING,
                 6.76))
         self.audio_sink_0 = audio.sink(audio_rate, 'plughw:0,0', True)
         self.analog_agc_xx_0 = analog.agc_cc(1e-3, 0.1, 1.0)
@@ -414,7 +415,7 @@ class psk31_rx(gr.top_block, Qt.QWidget):
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
-        self.freq_xlating_fir_filter_xxx_0.set_taps(firdes.low_pass(1, self.samp_rate, 12000, 12000, firdes.WIN_HAMMING, 6.76))
+        self.freq_xlating_fir_filter_xxx_0.set_taps(firdes.low_pass(1, self.samp_rate, 12000, 12000, window.WIN_HAMMING, 6.76))
         self.osmosdr_source_0.set_sample_rate(self.samp_rate)
         self.qtgui_time_sink_x_0.set_samp_rate(self.samp_rate / 120 / 16 / 16)
         self.qtgui_time_sink_x_1.set_samp_rate(self.samp_rate / 120)
@@ -441,7 +442,7 @@ class psk31_rx(gr.top_block, Qt.QWidget):
 
     def set_int_rate(self, int_rate):
         self.int_rate = int_rate
-        self.band_pass_filter_0.set_taps(firdes.complex_band_pass(1, self.int_rate, 200, 2800, 200, firdes.WIN_HAMMING, 6.76))
+        self.band_pass_filter_0.set_taps(firdes.complex_band_pass(1, self.int_rate, 200, 2800, 200, window.WIN_HAMMING, 6.76))
 
     def get_gain(self):
         return self.gain
@@ -455,7 +456,7 @@ class psk31_rx(gr.top_block, Qt.QWidget):
 
     def set_audio_rate(self, audio_rate):
         self.audio_rate = audio_rate
-        self.freq_xlating_fir_filter_xxx_1.set_taps(firdes.low_pass(10, self.audio_rate, 120, 40, firdes.WIN_HAMMING, 6.76))
+        self.freq_xlating_fir_filter_xxx_1.set_taps(firdes.low_pass(10, self.audio_rate, 120, 40, window.WIN_HAMMING, 6.76))
 
 
 

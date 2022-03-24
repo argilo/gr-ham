@@ -31,6 +31,7 @@ from gnuradio import blocks
 from gnuradio import digital
 from gnuradio import filter
 from gnuradio import gr
+from gnuradio.fft import window
 import sys
 import signal
 from argparse import ArgumentParser
@@ -105,7 +106,7 @@ class chu(gr.top_block, Qt.QWidget):
                 100))
         self.qtgui_waterfall_sink_x_1 = qtgui.waterfall_sink_c(
             1024, #size
-            firdes.WIN_BLACKMAN_hARRIS, #wintype
+            window.WIN_BLACKMAN_hARRIS, #wintype
             0, #fc
             samp_rate, #bw
             "", #name
@@ -138,7 +139,7 @@ class chu(gr.top_block, Qt.QWidget):
         self.top_grid_layout.addWidget(self._qtgui_waterfall_sink_x_1_win)
         self.qtgui_waterfall_sink_x_0 = qtgui.waterfall_sink_c(
             1024, #size
-            firdes.WIN_BLACKMAN_hARRIS, #wintype
+            window.WIN_BLACKMAN_hARRIS, #wintype
             0, #fc
             samp_rate, #bw
             "", #name
@@ -235,7 +236,7 @@ class chu(gr.top_block, Qt.QWidget):
                 samp_rate / 25,
                 200,
                 50,
-                firdes.WIN_HAMMING,
+                window.WIN_HAMMING,
                 6.76))
         self.low_pass_filter_0 = filter.fir_filter_ccf(
             decimation,
@@ -244,7 +245,7 @@ class chu(gr.top_block, Qt.QWidget):
                 samp_rate,
                 20000,
                 5000,
-                firdes.WIN_HAMMING,
+                window.WIN_HAMMING,
                 6.76))
         self.ham_chu_decode_0 = ham.chu_decode()
         self.digital_binary_slicer_fb_0 = digital.binary_slicer_fb()
@@ -261,7 +262,7 @@ class chu(gr.top_block, Qt.QWidget):
                 200,
                 2800,
                 200,
-                firdes.WIN_HAMMING,
+                window.WIN_HAMMING,
                 6.76))
         self.audio_sink_0_0 = audio.sink(48000, '', True)
         self.analog_sig_source_x_1 = analog.sig_source_c(samp_rate / decimation, analog.GR_COS_WAVE, -(space_tone + mark_tone) / 2, 1, 0, 0)
@@ -312,9 +313,9 @@ class chu(gr.top_block, Qt.QWidget):
         self.set_decimation(self.samp_rate // 48000)
         self.analog_sig_source_x_0.set_sampling_freq(self.samp_rate)
         self.analog_sig_source_x_1.set_sampling_freq(self.samp_rate / self.decimation)
-        self.band_pass_filter_0.set_taps(firdes.complex_band_pass(1, self.samp_rate / self.decimation, 200, 2800, 200, firdes.WIN_HAMMING, 6.76))
-        self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, 20000, 5000, firdes.WIN_HAMMING, 6.76))
-        self.low_pass_filter_1.set_taps(firdes.low_pass(1000, self.samp_rate / 25, 200, 50, firdes.WIN_HAMMING, 6.76))
+        self.band_pass_filter_0.set_taps(firdes.complex_band_pass(1, self.samp_rate / self.decimation, 200, 2800, 200, window.WIN_HAMMING, 6.76))
+        self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, 20000, 5000, window.WIN_HAMMING, 6.76))
+        self.low_pass_filter_1.set_taps(firdes.low_pass(1000, self.samp_rate / 25, 200, 50, window.WIN_HAMMING, 6.76))
         self.osmosdr_source_1.set_sample_rate(self.samp_rate)
         self.qtgui_time_sink_x_0.set_samp_rate(self.samp_rate)
         self.qtgui_waterfall_sink_x_0.set_frequency_range(0, self.samp_rate)
@@ -364,7 +365,7 @@ class chu(gr.top_block, Qt.QWidget):
     def set_decimation(self, decimation):
         self.decimation = decimation
         self.analog_sig_source_x_1.set_sampling_freq(self.samp_rate / self.decimation)
-        self.band_pass_filter_0.set_taps(firdes.complex_band_pass(1, self.samp_rate / self.decimation, 200, 2800, 200, firdes.WIN_HAMMING, 6.76))
+        self.band_pass_filter_0.set_taps(firdes.complex_band_pass(1, self.samp_rate / self.decimation, 200, 2800, 200, window.WIN_HAMMING, 6.76))
 
     def get_chu_freq(self):
         return self.chu_freq

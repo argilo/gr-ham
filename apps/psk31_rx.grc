@@ -197,7 +197,7 @@ blocks:
     samp_rate: int_rate
     type: fir_filter_ccc
     width: '200'
-    win: firdes.WIN_HAMMING
+    win: window.WIN_HAMMING
   states:
     bus_sink: false
     bus_source: false
@@ -335,7 +335,7 @@ blocks:
     maxoutbuf: '0'
     minoutbuf: '0'
     samp_rate: samp_rate
-    taps: firdes.low_pass(1, samp_rate, 12000, 12000, firdes.WIN_HAMMING, 6.76)
+    taps: firdes.low_pass(1, samp_rate, 12000, 12000, window.WIN_HAMMING, 6.76)
     type: ccc
   states:
     bus_sink: false
@@ -355,7 +355,7 @@ blocks:
     maxoutbuf: '0'
     minoutbuf: '0'
     samp_rate: audio_rate
-    taps: firdes.low_pass(10, audio_rate, 120, 40, firdes.WIN_HAMMING, 6.76)
+    taps: firdes.low_pass(10, audio_rate, 120, 40, window.WIN_HAMMING, 6.76)
     type: ccc
   states:
     bus_sink: false
@@ -1059,7 +1059,7 @@ blocks:
     showports: 'False'
     type: complex
     update_time: '0.10'
-    wintype: firdes.WIN_BLACKMAN_hARRIS
+    wintype: window.WIN_BLACKMAN_hARRIS
   states:
     bus_sink: false
     bus_source: false
@@ -1120,7 +1120,7 @@ blocks:
     showports: 'False'
     type: complex
     update_time: '0.10'
-    wintype: firdes.WIN_BLACKMAN_hARRIS
+    wintype: window.WIN_BLACKMAN_hARRIS
   states:
     bus_sink: false
     bus_source: false
@@ -1181,7 +1181,7 @@ blocks:
     showports: 'False'
     type: float
     update_time: '0.10'
-    wintype: firdes.WIN_BLACKMAN_hARRIS
+    wintype: window.WIN_BLACKMAN_hARRIS
   states:
     bus_sink: false
     bus_source: false
