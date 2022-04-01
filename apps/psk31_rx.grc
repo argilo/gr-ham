@@ -1,6 +1,7 @@
 options:
   parameters:
     author: ''
+    catch_exceptions: 'True'
     category: Custom
     cmake_opt: ''
     comment: ''
@@ -63,7 +64,7 @@ blocks:
     gui_hint: ''
     label: RX gain
     min_len: '200'
-    orient: Qt.Horizontal
+    orient: QtCore.Qt.Horizontal
     rangeType: float
     start: '0'
     step: '0.4'
@@ -96,7 +97,7 @@ blocks:
     gui_hint: ''
     label: Tuning
     min_len: '200'
-    orient: Qt.Horizontal
+    orient: QtCore.Qt.Horizontal
     rangeType: float
     start: center_freq + 110000
     step: '1000'
@@ -117,7 +118,7 @@ blocks:
     gui_hint: ''
     label: PSK offset
     min_len: '200'
-    orient: Qt.Horizontal
+    orient: QtCore.Qt.Horizontal
     rangeType: float
     start: '0'
     step: '10'
@@ -169,7 +170,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    device_name: plughw:0,0
+    device_name: ''
     num_inputs: '1'
     ok_to_block: 'True'
     samp_rate: audio_rate
@@ -197,7 +198,7 @@ blocks:
     samp_rate: int_rate
     type: fir_filter_ccc
     width: '200'
-    win: firdes.WIN_HAMMING
+    win: window.WIN_HAMMING
   states:
     bus_sink: false
     bus_source: false
@@ -335,7 +336,7 @@ blocks:
     maxoutbuf: '0'
     minoutbuf: '0'
     samp_rate: samp_rate
-    taps: firdes.low_pass(1, samp_rate, 12000, 12000, firdes.WIN_HAMMING, 6.76)
+    taps: firdes.low_pass(1, samp_rate, 12000, 12000, window.WIN_HAMMING, 6.76)
     type: ccc
   states:
     bus_sink: false
@@ -355,7 +356,7 @@ blocks:
     maxoutbuf: '0'
     minoutbuf: '0'
     samp_rate: audio_rate
-    taps: firdes.low_pass(10, audio_rate, 120, 40, firdes.WIN_HAMMING, 6.76)
+    taps: firdes.low_pass(10, audio_rate, 120, 40, window.WIN_HAMMING, 6.76)
     type: ccc
   states:
     bus_sink: false
@@ -1059,7 +1060,7 @@ blocks:
     showports: 'False'
     type: complex
     update_time: '0.10'
-    wintype: firdes.WIN_BLACKMAN_hARRIS
+    wintype: window.WIN_BLACKMAN_hARRIS
   states:
     bus_sink: false
     bus_source: false
@@ -1120,7 +1121,7 @@ blocks:
     showports: 'False'
     type: complex
     update_time: '0.10'
-    wintype: firdes.WIN_BLACKMAN_hARRIS
+    wintype: window.WIN_BLACKMAN_hARRIS
   states:
     bus_sink: false
     bus_source: false
@@ -1181,7 +1182,7 @@ blocks:
     showports: 'False'
     type: float
     update_time: '0.10'
-    wintype: firdes.WIN_BLACKMAN_hARRIS
+    wintype: window.WIN_BLACKMAN_hARRIS
   states:
     bus_sink: false
     bus_source: false
@@ -1213,3 +1214,4 @@ connections:
 
 metadata:
   file_format: 1
+  grc_version: v3.11.0.0git-70-gf44384ae
