@@ -6,9 +6,9 @@
 #
 # GNU Radio Python Flow Graph
 # Title: Psk31 Rx
-# GNU Radio version: 3.8.1.0
+# GNU Radio version: v3.11.0.0git-70-gf44384ae
 
-from distutils.version import StrictVersion
+from packaging.version import Version as StrictVersion
 
 if __name__ == '__main__':
     import ctypes
@@ -37,17 +37,20 @@ from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio.qtgui import Range, RangeWidget
+from PyQt5 import QtCore
 import ham
 import math
 import osmosdr
 import time
+
+
 
 from gnuradio import qtgui
 
 class psk31_rx(gr.top_block, Qt.QWidget):
 
     def __init__(self):
-        gr.top_block.__init__(self, "Psk31 Rx")
+        gr.top_block.__init__(self, "Psk31 Rx", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("Psk31 Rx")
         qtgui.util.check_set_qss()
@@ -92,21 +95,22 @@ class psk31_rx(gr.top_block, Qt.QWidget):
         # Blocks
         ##################################################
         self._psk_offset_range = Range(0, 3000, 10, 1000, 200)
-        self._psk_offset_win = RangeWidget(self._psk_offset_range, self.set_psk_offset, 'PSK offset', "counter_slider", float)
-        self.top_grid_layout.addWidget(self._psk_offset_win)
+        self._psk_offset_win = RangeWidget(self._psk_offset_range, self.set_psk_offset, "PSK offset", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._psk_offset_win)
         self._psk_center_range = Range(center_freq + 110000, center_freq + 150000, 1000, center_freq + 141000, 200)
-        self._psk_center_win = RangeWidget(self._psk_center_range, self.set_psk_center, 'Tuning', "counter_slider", float)
-        self.top_grid_layout.addWidget(self._psk_center_win)
+        self._psk_center_win = RangeWidget(self._psk_center_range, self.set_psk_center, "Tuning", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._psk_center_win)
         self._gain_range = Range(0, 50, 0.4, 10, 200)
-        self._gain_win = RangeWidget(self._gain_range, self.set_gain, 'RX gain', "counter_slider", float)
-        self.top_grid_layout.addWidget(self._gain_win)
+        self._gain_win = RangeWidget(self._gain_range, self.set_gain, "RX gain", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._gain_win)
         self.qtgui_waterfall_sink_x_2 = qtgui.waterfall_sink_f(
             1024, #size
             window.WIN_BLACKMAN_hARRIS, #wintype
             0, #fc
             samp_rate / 120, #bw
             "", #name
-            1 #number of inputs
+            1, #number of inputs
+            None # parent
         )
         self.qtgui_waterfall_sink_x_2.set_update_time(0.10)
         self.qtgui_waterfall_sink_x_2.enable_grid(False)
@@ -132,15 +136,17 @@ class psk31_rx(gr.top_block, Qt.QWidget):
 
         self.qtgui_waterfall_sink_x_2.set_intensity_range(-140, 10)
 
-        self._qtgui_waterfall_sink_x_2_win = sip.wrapinstance(self.qtgui_waterfall_sink_x_2.pyqwidget(), Qt.QWidget)
-        self.top_grid_layout.addWidget(self._qtgui_waterfall_sink_x_2_win)
+        self._qtgui_waterfall_sink_x_2_win = sip.wrapinstance(self.qtgui_waterfall_sink_x_2.qwidget(), Qt.QWidget)
+
+        self.top_layout.addWidget(self._qtgui_waterfall_sink_x_2_win)
         self.qtgui_waterfall_sink_x_1 = qtgui.waterfall_sink_c(
             1024, #size
             window.WIN_BLACKMAN_hARRIS, #wintype
             0, #fc
             samp_rate / 20, #bw
             "", #name
-            1 #number of inputs
+            1, #number of inputs
+            None # parent
         )
         self.qtgui_waterfall_sink_x_1.set_update_time(0.10)
         self.qtgui_waterfall_sink_x_1.enable_grid(False)
@@ -165,15 +171,17 @@ class psk31_rx(gr.top_block, Qt.QWidget):
 
         self.qtgui_waterfall_sink_x_1.set_intensity_range(-140, 10)
 
-        self._qtgui_waterfall_sink_x_1_win = sip.wrapinstance(self.qtgui_waterfall_sink_x_1.pyqwidget(), Qt.QWidget)
-        self.top_grid_layout.addWidget(self._qtgui_waterfall_sink_x_1_win)
+        self._qtgui_waterfall_sink_x_1_win = sip.wrapinstance(self.qtgui_waterfall_sink_x_1.qwidget(), Qt.QWidget)
+
+        self.top_layout.addWidget(self._qtgui_waterfall_sink_x_1_win)
         self.qtgui_waterfall_sink_x_0 = qtgui.waterfall_sink_c(
             1024, #size
             window.WIN_BLACKMAN_hARRIS, #wintype
             center_freq, #fc
             samp_rate, #bw
             "", #name
-            1 #number of inputs
+            1, #number of inputs
+            None # parent
         )
         self.qtgui_waterfall_sink_x_0.set_update_time(0.10)
         self.qtgui_waterfall_sink_x_0.enable_grid(False)
@@ -198,13 +206,15 @@ class psk31_rx(gr.top_block, Qt.QWidget):
 
         self.qtgui_waterfall_sink_x_0.set_intensity_range(-140, 10)
 
-        self._qtgui_waterfall_sink_x_0_win = sip.wrapinstance(self.qtgui_waterfall_sink_x_0.pyqwidget(), Qt.QWidget)
-        self.top_grid_layout.addWidget(self._qtgui_waterfall_sink_x_0_win)
+        self._qtgui_waterfall_sink_x_0_win = sip.wrapinstance(self.qtgui_waterfall_sink_x_0.qwidget(), Qt.QWidget)
+
+        self.top_layout.addWidget(self._qtgui_waterfall_sink_x_0_win)
         self.qtgui_time_sink_x_1 = qtgui.time_sink_c(
             1024, #size
             samp_rate / 120, #samp_rate
             "", #name
-            1 #number of inputs
+            1, #number of inputs
+            None # parent
         )
         self.qtgui_time_sink_x_1.set_update_time(0.10)
         self.qtgui_time_sink_x_1.set_y_axis(-1, 1)
@@ -248,13 +258,14 @@ class psk31_rx(gr.top_block, Qt.QWidget):
             self.qtgui_time_sink_x_1.set_line_marker(i, markers[i])
             self.qtgui_time_sink_x_1.set_line_alpha(i, alphas[i])
 
-        self._qtgui_time_sink_x_1_win = sip.wrapinstance(self.qtgui_time_sink_x_1.pyqwidget(), Qt.QWidget)
-        self.top_grid_layout.addWidget(self._qtgui_time_sink_x_1_win)
+        self._qtgui_time_sink_x_1_win = sip.wrapinstance(self.qtgui_time_sink_x_1.qwidget(), Qt.QWidget)
+        self.top_layout.addWidget(self._qtgui_time_sink_x_1_win)
         self.qtgui_time_sink_x_0 = qtgui.time_sink_c(
             1024, #size
             samp_rate / 120 / 16 / 16, #samp_rate
             "", #name
-            1 #number of inputs
+            1, #number of inputs
+            None # parent
         )
         self.qtgui_time_sink_x_0.set_update_time(0.10)
         self.qtgui_time_sink_x_0.set_y_axis(-1, 1)
@@ -298,13 +309,14 @@ class psk31_rx(gr.top_block, Qt.QWidget):
             self.qtgui_time_sink_x_0.set_line_marker(i, markers[i])
             self.qtgui_time_sink_x_0.set_line_alpha(i, alphas[i])
 
-        self._qtgui_time_sink_x_0_win = sip.wrapinstance(self.qtgui_time_sink_x_0.pyqwidget(), Qt.QWidget)
-        self.top_grid_layout.addWidget(self._qtgui_time_sink_x_0_win)
+        self._qtgui_time_sink_x_0_win = sip.wrapinstance(self.qtgui_time_sink_x_0.qwidget(), Qt.QWidget)
+        self.top_layout.addWidget(self._qtgui_time_sink_x_0_win)
         self.qtgui_number_sink_0 = qtgui.number_sink(
             gr.sizeof_float,
             0,
             qtgui.NUM_GRAPH_HORIZ,
-            1
+            1,
+            None # parent
         )
         self.qtgui_number_sink_0.set_update_time(0.10)
         self.qtgui_number_sink_0.set_title("")
@@ -330,8 +342,8 @@ class psk31_rx(gr.top_block, Qt.QWidget):
             self.qtgui_number_sink_0.set_factor(i, factor[i])
 
         self.qtgui_number_sink_0.enable_autoscale(False)
-        self._qtgui_number_sink_0_win = sip.wrapinstance(self.qtgui_number_sink_0.pyqwidget(), Qt.QWidget)
-        self.top_grid_layout.addWidget(self._qtgui_number_sink_0_win)
+        self._qtgui_number_sink_0_win = sip.wrapinstance(self.qtgui_number_sink_0.qwidget(), Qt.QWidget)
+        self.top_layout.addWidget(self._qtgui_number_sink_0_win)
         self.osmosdr_source_0 = osmosdr.source(
             args="numchan=" + str(1) + " " + ''
         )
@@ -339,6 +351,9 @@ class psk31_rx(gr.top_block, Qt.QWidget):
         self.osmosdr_source_0.set_sample_rate(samp_rate)
         self.osmosdr_source_0.set_center_freq(center_freq, 0)
         self.osmosdr_source_0.set_freq_corr(0, 0)
+        self.osmosdr_source_0.set_dc_offset_mode(0, 0)
+        self.osmosdr_source_0.set_iq_balance_mode(0, 0)
+        self.osmosdr_source_0.set_gain_mode(0, 0)
         self.osmosdr_source_0.set_gain(gain, 0)
         self.osmosdr_source_0.set_if_gain(20, 0)
         self.osmosdr_source_0.set_bb_gain(20, 0)
@@ -365,10 +380,9 @@ class psk31_rx(gr.top_block, Qt.QWidget):
                 200,
                 window.WIN_HAMMING,
                 6.76))
-        self.audio_sink_0 = audio.sink(audio_rate, 'plughw:0,0', True)
+        self.audio_sink_0 = audio.sink(audio_rate, '', True)
         self.analog_agc_xx_0 = analog.agc_cc(1e-3, 0.1, 1.0)
         self.analog_agc_xx_0.set_max_gain(65536)
-
 
 
         ##################################################
@@ -398,6 +412,9 @@ class psk31_rx(gr.top_block, Qt.QWidget):
     def closeEvent(self, event):
         self.settings = Qt.QSettings("GNU Radio", "psk31_rx")
         self.settings.setValue("geometry", self.saveGeometry())
+        self.stop()
+        self.wait()
+
         event.accept()
 
     def get_center_freq(self):
@@ -461,7 +478,6 @@ class psk31_rx(gr.top_block, Qt.QWidget):
 
 
 
-
 def main(top_block_cls=psk31_rx, options=None):
 
     if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
@@ -476,6 +492,9 @@ def main(top_block_cls=psk31_rx, options=None):
     tb.show()
 
     def sig_handler(sig=None, frame=None):
+        tb.stop()
+        tb.wait()
+
         Qt.QApplication.quit()
 
     signal.signal(signal.SIGINT, sig_handler)
@@ -485,11 +504,6 @@ def main(top_block_cls=psk31_rx, options=None):
     timer.start(500)
     timer.timeout.connect(lambda: None)
 
-    def quitting():
-        tb.stop()
-        tb.wait()
-
-    qapp.aboutToQuit.connect(quitting)
     qapp.exec_()
 
 if __name__ == '__main__':
