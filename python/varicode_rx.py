@@ -100,7 +100,7 @@ class varicode_rx(gr.basic_block):
             out_sig=[numpy.int8])
 
     def forecast(self, noutput_items, ninput_items_required):
-        ninput_items_required[0] = noutput_items * 8
+        return [noutput_items * 8]
 
     def general_work(self, input_items, output_items):
         in0 = input_items[0]
