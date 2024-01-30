@@ -15,8 +15,3 @@ Build instructions:
     cmake ../
     make
     sudo make install
-
-If your GNU Radio is installed in `/usr` (rather than `/usr/local`), then
-replace the third line above with:
-
-    cmake -DCMAKE_INSTALL_PREFIX=/usr ../
